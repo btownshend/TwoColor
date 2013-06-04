@@ -87,9 +87,9 @@ if strcmp(fcsheader_type,'FCS1.0')
     return;
 elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS2.0 or FCS3.0 types
     fcshdr.fcstype = fcsheader_type;
-    FcsHeaderStartPos   = str2num(char(fcsheader_1stline(16:18)'));
-    FcsHeaderStopPos    = str2num(char(fcsheader_1stline(23:26)'));
-    FcsDataStartPos     = str2num(char(fcsheader_1stline(31:34)'));
+    FcsHeaderStartPos   = str2num(char(fcsheader_1stline(11:18)'));
+    FcsHeaderStopPos    = str2num(char(fcsheader_1stline(19:26)'));
+    FcsDataStartPos     = str2num(char(fcsheader_1stline(27:34)'));
     status = fseek(fid,FcsHeaderStartPos,'bof');
     fcsheader_main = fread(fid,FcsHeaderStopPos-FcsHeaderStartPos+1,'char');%read the main header
     warning off MATLAB:nonIntegerTruncatedInConversionToChar;
@@ -115,6 +115,15 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
         fcshdr.par(i).name = get_mnemonic_value(['$P',num2str(i),'N'],fcsheader_main, mnemonic_separator);
         fcshdr.par(i).range = str2num(get_mnemonic_value(['$P',num2str(i),'R'],fcsheader_main, mnemonic_separator));
         fcshdr.par(i).bit = str2num(get_mnemonic_value(['$P',num2str(i),'B'],fcsheader_main, mnemonic_separator));
+%        fcshdr.par(i).F = str2num(get_mnemonic_value(['$P',num2str(i),'F'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).G = str2num(get_mnemonic_value(['$P',num2str(i),'G'],fcsheader_main, mnemonic_separator));
+%        fcshdr.par(i).L = str2num(get_mnemonic_value(['$P',num2str(i),'L'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).O = get_mnemonic_value(['$P',num2str(i),'O'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).P = get_mnemonic_value(['$P',num2str(i),'P'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).S = str2num(get_mnemonic_value(['$P',num2str(i),'S'],fcsheader_main, mnemonic_separator));
+%        fcshdr.par(i).T = str2num(get_mnemonic_value(['$P',num2str(i),'T'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).V = get_mnemonic_value(['$P',num2str(i),'V'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).calibration = get_mnemonic_value(['$P',num2str(i),'CALIBRATION'],fcsheader_main, mnemonic_separator);
 %==============   Changed way that amplification type is treated ---  ARM  ==================
         par_exponent_str= (get_mnemonic_value(['$P',num2str(i),'E'],fcsheader_main, mnemonic_separator));
         if isempty(par_exponent_str)
@@ -170,6 +179,28 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
     fcshdr.experiment = get_mnemonic_value('$EXP',fcsheader_main, mnemonic_separator);
     fcshdr.cells = get_mnemonic_value('$CELLS',fcsheader_main, mnemonic_separator);
     fcshdr.creator = get_mnemonic_value('CREATOR',fcsheader_main, mnemonic_separator);
+    fcshdr.comment = get_mnemonic_value('$COM',fcsheader_main, mnemonic_separator);
+    fcshdr.csmode = get_mnemonic_value('$CSMODE',fcsheader_main, mnemonic_separator);
+    fcshdr.csvbits = get_mnemonic_value('$CSVBITS',fcsheader_main, mnemonic_separator);
+    fcshdr.cytsn = get_mnemonic_value('$CYTSN',fcsheader_main, mnemonic_separator);
+    fcshdr.abrt = get_mnemonic_value('$ABRT',fcsheader_main, mnemonic_separator);
+    fcshdr.fil = get_mnemonic_value('$FIL',fcsheader_main, mnemonic_separator);
+    fcshdr.gate = get_mnemonic_value('$GATE',fcsheader_main, mnemonic_separator);
+    fcshdr.gating = get_mnemonic_value('$GATING',fcsheader_main, mnemonic_separator);
+    fcshdr.inst = get_mnemonic_value('$INST',fcsheader_main, mnemonic_separator);
+    fcshdr.lost = get_mnemonic_value('$LOST',fcsheader_main, mnemonic_separator);
+    fcshdr.op = get_mnemonic_value('$OP',fcsheader_main, mnemonic_separator);
+    fcshdr.originality = get_mnemonic_value('$ORIGINALITY',fcsheader_main, mnemonic_separator);
+    fcshdr.plateid = get_mnemonic_value('$PLATEID',fcsheader_main, mnemonic_separator);
+    fcshdr.platename = get_mnemonic_value('$PLATENAME',fcsheader_main, mnemonic_separator);
+    fcshdr.smno = get_mnemonic_value('$SMNO',fcsheader_main, mnemonic_separator);
+    fcshdr.spillover = get_mnemonic_value('$SPILLOVER',fcsheader_main, mnemonic_separator);
+    fcshdr.src = get_mnemonic_value('$SRC',fcsheader_main, mnemonic_separator);
+    fcshdr.sys = get_mnemonic_value('$SYS',fcsheader_main, mnemonic_separator);
+    fcshdr.timestep = get_mnemonic_value('$TIMESTEP',fcsheader_main, mnemonic_separator);
+    fcshdr.tr = get_mnemonic_value('$TR',fcsheader_main, mnemonic_separator);
+    fcshdr.vol = get_mnemonic_value('$VOL',fcsheader_main, mnemonic_separator);
+    fcshdr.wellid = get_mnemonic_value('$WELLID',fcsheader_main, mnemonic_separator);
 else
     hm = msgbox([FileName,': The file can not be read (Unsupported FCS type)'],'FcAnalysis info','warn');
     fcsdat = []; fcshdr = [];
@@ -193,7 +224,12 @@ if strcmp(fcsheader_type,'FCS2.0')
                 if fcshdr.datatype ~= 'F'
                     fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'uint32')');
                 else % 'LYSYS' case
+                  if  strcmp(fcshdr.byteorder, '1,2,3,4') 
+                    disp('Big');
+                    fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32',0,'l')');
+                  else
                     fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32')');
+                  end
                 end
         else 
             bittype = ['ubit',num2str(fcshdr.par(1).bit)];
@@ -218,7 +254,12 @@ elseif strcmp(fcsheader_type,'FCS3.0')
             fcshdr.par(i).range = new_xrange;
         end
     else % ordinary FCS 3.0
+      if  strcmp(fcshdr.byteorder, '1,2,3,4') 
+%        fprintf('About to read data at position %d (start=%d)\n', ftell(fid),FcsDataStartPos);
+        fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32',0,'l')');
+      else
         fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32')';
+      end
     end
     fclose(fid);
 end
@@ -246,7 +287,8 @@ if strcmp(mnemonic_separator,'\')  || strcmp(mnemonic_separator,'!') ...
         || strcmp(mnemonic_separator, '/') || strcmp(mnemonic_separator,char(9)) % added by GAP 1/22/08
     mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
     if isempty(mnemonic_startpos)
-        mneval = [];
+      %      fprintf('%s not found in FCS header\n', mnemonic_name);
+        mneval = '';
         return;
     end
     mnemonic_length = length(mnemonic_name);
@@ -258,7 +300,8 @@ if strcmp(mnemonic_separator,'\')  || strcmp(mnemonic_separator,'!') ...
 elseif strcmp(mnemonic_separator,'FF')
     mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
     if isempty(mnemonic_startpos)
-        mneval = [];
+      fprintf('%s not found in FCS header\n', mnemonic_name);
+        mneval = '';
         return;
     end
     mnemonic_length = length(mnemonic_name);
