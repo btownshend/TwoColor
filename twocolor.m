@@ -64,7 +64,9 @@ function f=twocolor(fnames,gates,varargin)
     channels={'fsca','fsch','ssca','sscw','ssch','gfp','cherry','dapi'};
     for j=1:length(channels)
       channel=channels{j};
-      f(i).(channel)=f(i).data(:,eval(channel));
+      if ~isempty(eval(channel))
+        f(i).(channel)=f(i).data(:,eval(channel));
+      end
     end
     if isempty(f(i).dapi)
       % Kludge - fake DAPI as 300.0 so gates work
@@ -194,7 +196,7 @@ function f=twocolor(fnames,gates,varargin)
     hold on;
     % Calculate std of log(normal) distribution with extreme points removed
     stdev=std(log(ratio((ratio/median(ratio))>0.25&(ratio/median(ratio))<4)));
-    legv{end+1}=sprintf('%s (mu=%.2f,sigma=%.2f,N=%d)',hdr.cells,median(ratio),exp(stdev),length(ratio));
+    legv{end+1}=sprintf('%s (mu=%.3f,sigma=%.2f,N=%d)',hdr.cells,median(ratio),exp(stdev),length(ratio));
     ti=[ti,', ',hdr.cells];
   end
   ti=ti(3:end);  % Remove leading ', '
