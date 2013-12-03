@@ -51,13 +51,13 @@ function f=twocolor(fnames,gates,varargin)
       f(i).hdr.cells=f(i).fname;
     end
     % Channel mapping for devices used
-    fsca=findchannel(f(i).hdr.par,'FSC-A',{},1);
-    ssca=findchannel(f(i).hdr.par,'SSC-A',{},1);
+    fsca=findchannel(f(i).hdr.par,'FSC-A',{'*FSC'},1);
+    ssca=findchannel(f(i).hdr.par,'SSC-A',{'*SSC'},1);
     sscw=findchannel(f(i).hdr.par,'SSC-W',{},0);
-    ssch=findchannel(f(i).hdr.par,'SSC-H',{},1);
-    fsch=findchannel(f(i).hdr.par,'FSC-H',{},1);
-    gfp=findchannel(f(i).hdr.par,'GFP',{'GFP-A','B1-A','FITC-A'},1);
-    cherry=findchannel(f(i).hdr.par,'mCherry-A',{'Y2-A'},1);
+    ssch=findchannel(f(i).hdr.par,'SSC-H',{},0);
+    fsch=findchannel(f(i).hdr.par,'FSC-H',{},0);
+    gfp=findchannel(f(i).hdr.par,'GFP',{'GFP-A','B1-A','FITC-A','525/50 [488]'},1);
+    cherry=findchannel(f(i).hdr.par,'mCherry-A',{'Y2-A','610/20 [561]'},1);
     dapi=findchannel(f(i).hdr.par,'DAPI-A',{'V1-A'},0);  % Optional 
 
     % Copy channels to explicit fields in f(i)
