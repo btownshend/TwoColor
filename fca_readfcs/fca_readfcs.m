@@ -284,7 +284,8 @@ function mneval = get_mnemonic_value(mnemonic_name,fcsheader,mnemonic_separator)
 
 if strcmp(mnemonic_separator,'\')  || strcmp(mnemonic_separator,'!') ...
         || strcmp(mnemonic_separator,'|') || strcmp(mnemonic_separator,'@')...
-        || strcmp(mnemonic_separator, '/') || strcmp(mnemonic_separator,char(9)) % added by GAP 1/22/08
+        || strcmp(mnemonic_separator, '/') || strcmp(mnemonic_separator,char(9)) ...
+         || strcmp(mnemonic_separator,char(10)) % added by GAP 1/22/08
     mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
     if isempty(mnemonic_startpos)
       %      fprintf('%s not found in FCS header\n', mnemonic_name);
@@ -310,4 +311,6 @@ elseif strcmp(mnemonic_separator,'FF')
     next_formfeed = next_formfeeds(1) + mnemonic_stoppos;
 
     mneval = char(fcsheader(mnemonic_stoppos + 1 : next_formfeed-1)');
+else
+  error('Unsupported separator: char(%d)',mnemonic_separator);
 end
