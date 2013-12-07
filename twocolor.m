@@ -24,7 +24,7 @@ function f=twocolor(fnames,gates,varargin)
                   'firstbin',[],...
                   'lastbin',[],...
                   'maingates',{{}},...
-                  'ratiorange',[1e-2,10],...
+                  'ratiorange',[1e-2,20],...
                   'normalizeratios',false,...
                   'maxevents',1000000,...
                   'desc',{{}});
@@ -58,17 +58,17 @@ function f=twocolor(fnames,gates,varargin)
     fsch=findchannel(f(i).hdr.par,'FSC-H',{},0);
     gfp=findchannel(f(i).hdr.par,'GFP',{'GFP-A','B1-A','FITC-A','525/50 [488]'},1);
     cherry=findchannel(f(i).hdr.par,'mCherry-A',{'Y2-A','610/20 [561]'},1);
-    dapi=findchannel(f(i).hdr.par,'DAPI-A',{'V1-A'},0);  % Optional 
-
+    dapi=findchannel(f(i).hdr.par,'DAPI-A',{'V1-A','460/50 [405]'},0);  % Optional 
+    triggerPW=findchannel(f(i).hdr.par,'Trigger Pulse Width',{},0);
     % Copy channels to explicit fields in f(i)
-    channels={'fsca','fsch','ssca','sscw','ssch','gfp','cherry','dapi'};
+    channels={'fsca','fsch','ssca','sscw','ssch','gfp','cherry','dapi','triggerPW'};
     for j=1:length(channels)
       channel=channels{j};
       if ~isempty(eval(channel))
         f(i).(channel)=f(i).data(:,eval(channel));
       end
     end
-    if isempty(f(i).dapi)
+    if ~isfield(f(i),'dapi') || isempty(f(i).dapi)
       % Kludge - fake DAPI as 300.0 so gates work
       f(i).dapi=300*ones(size(f(i).fsca));
     end
@@ -94,7 +94,7 @@ function f=twocolor(fnames,gates,varargin)
     m=pf(1);b=pf(2);
     mgfp=median(f(i).gfp(P(usegatenum,:)));
     mcherry=median(f(i).cherry(P(usegatenum,:)));
-    ratio=mgfp/mcherry;
+    ratio=mgfp./mcherry;
     rresid=f(i).gfp(P(usegatenum,:))-ratio*f(i).cherry(P(usegatenum,:));
     fprintf('%2d %40s %6d  %7.1f %7.1f %7.1f %7.3f %7.1f %7.3f %7.1f %7.1f %7.1f\n',i,hdr.cells,sum(P(usegatenum,:)),mgfp,std(f(i).gfp(P(usegatenum,:))),mcherry,ratio,std(rresid),m,b,std(presid),m*600+b);
   end
@@ -113,7 +113,7 @@ function f=twocolor(fnames,gates,varargin)
   end
 
   % Plot all the density of GFP vs. mCherry
-  figure;
+  setfig([f(1).fname,' GFPvsCherry']); clf;
   lastcells='';
 
   slow=1e10; shigh=1;
@@ -131,7 +131,7 @@ function f=twocolor(fnames,gates,varargin)
     gfpval=exp(mean(log(f(i).gfp(sel))));
 
     val=sum(f(i).gfp(sel))/sum(f(i).cherry(sel));
-    subplot(ceil(length(f)/2),2,i);
+    subplot(ceil(length(f)/2),1+(length(f)>1),i);
     densplot(f(i).cherry(sel),f(i).gfp(sel),[],[slow shigh glow ghigh],1);
     xlabel('mCherry');
     ylabel('GFP');
@@ -147,7 +147,7 @@ function f=twocolor(fnames,gates,varargin)
   legv={};
   ti='';
 
-  figure;
+  setfig([f(1).fname,' Bin edges']);clf;
 
   edges=[];
   if ~isempty(args.bins)
@@ -158,18 +158,22 @@ function f=twocolor(fnames,gates,varargin)
       edges(i*2)=args.maingates{i}(2);
     end
   elseif args.sortbins>0
-    sortratio=sort(ratio);
-    endpct=.02;
+    sortratio=sort(f(i).ratio(f(i).P(usegatenum,:)));
+    midratio=exp(mean(log(sortratio(round([.05,.95]*length(sortratio))))));
+    fprintf('Mid ratio = %g\n', midratio);
     if isempty(args.firstbin)
-      args.firstbin=sortratio(ceil(endpct*length(sortratio)));
+      low=sortratio(sortratio<midratio);
+      args.firstbin=low(round(0.5*length(low)));
+      fprintf('First bin at %g\n',args.firstbin);
     end
     if isempty(args.lastbin)
-      args.lastbin=sortratio(round((1-endpct)*length(sortratio)));
+      high=sortratio(sortratio>midratio);
+      args.lastbin=high(round(0.90*length(high)));
+      fprintf('Last bin at %g\n',args.lastbin);
     end
-    fprintf('median=%.2f\n',median(ratio));
-
     edges=args.firstbin*(args.lastbin/args.firstbin).^((0:(args.sortbins-2))/(args.sortbins-2));
   end
+  
   
   cols='bcmyrg';
   for i=1:length(f)
@@ -201,9 +205,10 @@ function f=twocolor(fnames,gates,varargin)
   end
   ti=ti(3:end);  % Remove leading ', '
   if ~isempty(edges)
-    fprintf('Edges for %s are [%s],  Pcts: ',hdr.cells,sprintf('%.2g ',edges));
+    f(i).edges=edges;
+    fprintf('Edges for %s are [%s]\nPcts: ',hdr.cells,sprintf('%.2g ',edges));
     cum=0;
-    c=axis
+    c=axis;
     for k=1:length(edges)
       plot([edges(k),edges(k)],c(3:4),':');
       fprintf('%.1f%% ',(sum(ratio<edges(k))-cum)/length(ratio)*100);
