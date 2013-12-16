@@ -8,19 +8,14 @@
 %  g.add('P8','inpolygon(log10(x.dapi),log10(x.ssca),[1.3906,3.8241,3.0596,2.9850,1.1575],[4.4185,4.5036,3.1845,1.6100,1.5888])','s2');
 %  g.add('P3','x.gfp>1000');
 %  g.print
-
 classdef Gates < handle
   properties
-    name;
-    parent;
-    expr;
+    g;   % Cell array of gates
   end
   
   methods
     function obj=Gates
-      obj.name={};
-      obj.parent=[];
-      obj.expr={};
+      obj.g={};
     end
     
     function add(obj,name,expr,parent)
@@ -28,20 +23,44 @@ classdef Gates < handle
       if nargin<4
         parent=nan;
       elseif ~isnumeric(parent)
-          parent=obj.lookup(parent);
+        parent=obj.lookup(parent);
       end
-      obj.name{end+1}=name;
-      obj.parent=[obj.parent,parent];
-      obj.expr{end+1}=expr;
+      obj.g{end+1}=Gate(name,parent,expr);
+    end
+    
+    function addpolygon(obj,name,vnames,islog,polygon,parent) 
+      assert(length(vnames)==2);
+      assert(length(islog)==2);
+      assert(size(polygon,2)==2);
+      assert(size(polygon,1)>=3);
+      if nargin<6
+        parent=nan;
+      elseif ~isnumeric(parent)
+        parent=obj.lookup(parent);
+      end
+      obj.g{end+1}=Gate(name,parent,vnames,islog,polygon);
+    end
+    
+    function addrange(obj,name,vname,islog,range,parent) 
+      assert(length(islog)==1);
+      assert(length(range)==2);
+      if nargin<6
+        parent=nan;
+      elseif ~isnumeric(parent)
+        parent=obj.lookup(parent);
+      end
+      obj.g{end+1}=Gate(name,parent,{vname},islog,range);
     end
     
     function num=lookup(obj,name)
-      num=find(strcmp(obj.name,name),1);
-      if isempty(num)
-        error('Unable to find gate "%s"\n', name);
+      for num=1:length(obj.g)
+        if strcmp(obj.g{num}.name,name)
+          return;
+        end
       end
+      error('Unable to find gate "%s"\n', name);
     end
-      
+    
     function sel=apply(obj,x,name)
     % Apply a gate
       if isempty(name)
@@ -54,24 +73,51 @@ classdef Gates < handle
         gnum=obj.lookup(name);
       end
       
-      if isfinite(obj.parent(gnum))
-        sel=obj.apply(x,obj.parent(gnum));
+      if isfinite(obj.g{gnum}.parent)
+        sel=obj.apply(x,obj.g{gnum}.parent);
       else
         sel=true(length(x),1);
       end
-      sel=sel&eval(obj.expr{gnum});
+      if obj.g{gnum}.gatetype==1   % Expr gate
+        sel=sel&eval(obj.g{gnum}.expr);
+      elseif obj.g{gnum}.gatetype==2  % Polygon gate
+        v=[];
+        for i=1:length(obj.g{gnum}.vars)
+          v(:,i)=x.(obj.g{gnum}.vars{i});
+          if obj.g{gnum}.islog;
+            fracneg=mean(v(:,i)<0);
+            if fracneg>0.01
+              fprintf('Warning: Ignoring %.2f%% of data that is negative\n', fracneg*100);
+            end
+            v(v(:,i)>0,i)=log10(v(v(:,i)>0,i));
+            v(v(:,i)<=0,i)=nan;
+          end
+        end
+        sel=sel&inpolygon(v(:,1),v(:,2),obj.g{gnum}.polygon(:,1),obj.g{gnum}.polygon(:,2));
+      elseif obj.g{gnum}.gatetype==3 % Range gate
+        v=x.(obj.g{gnum}.vars{1});
+        if obj.g{gnum}.islog
+          fracneg=mean(v<0);
+          if fracneg>0.01
+            fprintf('Warning: Ignoring %.2f%% of data that is negative\n', fracneg*100);
+          end
+          v(v>0)=log10(v(v>0));
+          v(v<=0)=nan;
+        end
+        sel=sel&v>=obj.g{gnum}.range(1)&v<=obj.g{gnum}.range(2);
+      end
     end
 
     function p=applyall(obj,x)
-      p=false(length(obj.name),size(x.data,1));
-      for i=1:length(obj.name)
+      p=false(length(obj.g),size(x.data,1));
+      for i=1:length(obj.g);
         p(i,:)=obj.apply(x,i);
       end
     end
     
     function print(obj)
-      for i=1:length(obj.name)
-        fprintf('%-10s %3d %s\n',obj.name{i},obj.parent(i),obj.expr{i});
+      for i=1:length(obj.g)
+        obj.g{i}.print();
       end
     end
 
@@ -79,25 +125,20 @@ classdef Gates < handle
       fprintf('Population Parent  Events  %%Parent  %%Total\n');
       p=applyall(obj,x);
       total=size(p,2);
-      for i=1:length(obj.name)
-        if isfinite(obj.parent(i))
-          psize=sum(p(obj.parent(i),:));
+      for i=1:length(obj.g)
+        if isfinite(obj.g{i}.parent)
+          psize=sum(p(obj.g{i}.parent,:));
         else
           psize=total;
         end
-        fprintf('%10s %3d %7d  %6.2f  %6.2f %s\n',obj.name{i},obj.parent(i),sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.expr{i});
+        fprintf('%10s %3d %7d  %6.2f  %6.2f %s\n',obj.g{i}.name,obj.g{i}.parent,sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.g{i}.desc());
       end
     end
 
-    function plot(obj, x, name, v1, v2, v1log, v2log)
-      if nargin<6
-        v1log=false;
-      end
-      if nargin<7
-        v2log=false;
-      end
+    function plot(obj, x, name)
       gnum=obj.lookup(name);
-      parent=obj.parent(gnum);
+      gate=obj.g{gnum};
+      parent=gate.parent;
       if isfinite(parent)
         psel=obj.apply(x,parent);
       else
@@ -106,35 +147,57 @@ classdef Gates < handle
       sel=obj.apply(x,gnum);
       setfig(name);
       clf;
-      subplot(311);
-      [~,range]=densplot(x.(v1),x.(v2),[],[],v1log||v2log);
-      xlabel(v1);
-      ylabel(v2);
-      title('All events');
-      subplot(312);
-      densplot(x.(v1)(psel),x.(v2)(psel),[],range,v1log||v2log);
-      xlabel(v1);
-      ylabel(v2);
-      title('Included in parent gate');
-      subplot(313);
-      densplot(x.(v1)(psel&sel),x.(v2)(psel&sel),[],range,v1log||v2log);
-      xlabel(v1);
-      ylabel(v2);
-      title('Included in this gate');
+      if gate.gatetype<=2
+        v1=gate.vars{1};
+        v2=gate.vars{2};
+        v1log=gate.islog(1);
+        v2log=gate.islog(2);
+        subplot(211);
+        [~,range]=densplot(x.(v1),x.(v2),[],[],v1log||v2log);
+        xlabel(v1);
+        ylabel(v2);
+        title('All events');
+        gate.drawgate();
 
-      %      plot(x.(v1)(~psel),x.(v2)(~psel),'k.');
-      %hold on;
-      %plot(x.(v1)(psel&~sel),x.(v2)(psel&~sel),'r.');
-      % plot(x.(v1)(psel&sel),x.(v2)(psel&sel),'g.');
-      if v1log
-        set(gca,'XScale','log');
+        subplot(212);
+        densplot(x.(v1)(psel),x.(v2)(psel),[],range,v1log||v2log);
+        xlabel(v1);
+        ylabel(v2);
+        title('Included in parent gate');
+        gate.drawgate();
+        
+        %      plot(x.(v1)(~psel),x.(v2)(~psel),'k.');
+        %hold on;
+        %plot(x.(v1)(psel&~sel),x.(v2)(psel&~sel),'r.');
+        % plot(x.(v1)(psel&sel),x.(v2)(psel&sel),'g.');
+        % if v1log
+        %   set(gca,'XScale','log');
+        % end
+        % if v2log
+        %   set(gca,'YScale','log');
+        % end
+      else % Range gate
+        v1=gate.vars{1};
+        subplot(211);
+        pdfplot(x.(v1));
+        if gate.islog
+          set(gca,'XScale','log');
+        end
+        xlabel(v1);
+        title('All events');
+        gate.drawgate();
+
+        subplot(212);
+        pdfplot(x.(v1)(psel));
+        if gate.islog
+          set(gca,'XScale','log');
+        end
+        xlabel(v1);
+        title('Included in parent gate');
+        gate.drawgate();
       end
-      if v2log
-        set(gca,'YScale','log');
-      end
-      xlabel(v1);
-      ylabel(v2);
-      suptitle(sprintf('Gate %s applied to %s', name, x.hdr.cells));
+      h=suptitle(sprintf('Gate %s applied to %s', name, x.hdr.cells));
+      set(h,'Interpreter','none');
     end
   end
 end
