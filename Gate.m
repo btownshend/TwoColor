@@ -36,7 +36,7 @@ classdef Gate < handle;
     end
     
     function print(obj)
-      fprintf('%-10s %3d %s\n',obj.name,obj.parent,obj.desc());
+      fprintf('%-20s %3d %s\n',obj.name,obj.parent,obj.desc());
     end
     
     function s=desc(obj)   

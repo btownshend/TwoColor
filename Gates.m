@@ -126,12 +126,13 @@ classdef Gates < handle
     
     function print(obj)
       for i=1:length(obj.g)
+        fprintf('%2d ',i);
         obj.g{i}.print();
       end
     end
 
     function printstats(obj,x)
-      fprintf('Population Parent  Events  %%Parent  %%Total\n');
+      fprintf('Population Parent Events %%Parent  %%Total\n');
       p=applyall(obj,x);
       total=size(p,2);
       for i=1:length(obj.g)
@@ -140,7 +141,7 @@ classdef Gates < handle
         else
           psize=total;
         end
-        fprintf('%10s %3d %7d  %6.2f  %6.2f %s\n',obj.g{i}.name,obj.g{i}.parent,sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.g{i}.desc());
+        fprintf('%10s %3d   %7d  %6.2f  %6.2f %s\n',obj.g{i}.name,obj.g{i}.parent,sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.g{i}.desc());
       end
     end
 
@@ -151,7 +152,7 @@ classdef Gates < handle
       if isfinite(parent)
         psel=obj.apply(x,parent);
       else
-        psel=true(length(x.(v1)),1);
+        psel=true(size(x.data,1),1);
       end
       sel=obj.apply(x,gnum);
       setfig(name);
@@ -202,5 +203,25 @@ classdef Gates < handle
       h=suptitle(sprintf('Gate %s applied to %s', name, x.hdr.cells));
       set(h,'Interpreter','none');
     end
+
+  function plotgates(obj)
+    ngate=length(obj.g);
+    nrow=ceil(sqrt(ngate));
+    ncol=ceil(ngate/nrow);
+    for i=1:length(obj.g)
+      subplot(nrow,ncol,i);
+      g=obj.g{i};
+      g.drawgate();
+      if isfield(g,'v1')
+        xlabel(g.v1);
+      end
+      if isfield(g,'v2')
+        ylabel(g.v2);
+      end
+      h=title(sprintf('%s (%s)',g.name,g.parent ));
+      set(h,'Interpreter','none');
+    end
   end
+  end
+  
 end
