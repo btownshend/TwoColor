@@ -78,11 +78,7 @@ classdef Gate < handle;
       elseif obj.gatetype==3
         c=axis;
         hold on;
-        if obj.islog
-          r=10.^obj.range;
-        else
-          r=obj.range;
-        end
+        r=obj.range;
         plot([r(1),r(1)],c(3:4),'r:');
         plot([r(2),r(2)],c(3:4),'r:');
       elseif obj.gattetype==4
