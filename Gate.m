@@ -4,18 +4,22 @@ classdef Gate < handle;
     name;
     parent;
     expr;    % Gate as a matlab expression
-    gatetype;  % 1=expr, 2=polygon, 3=range
+    gatetype;  % 1=expr, 2=polygon, 3=range, 4=not
     vars;   % {2} Variable names (e.g. 'fsca', or 'dapi')
     islog;   % (2) Whether to take log10 of v{1},v{2} before applying polygon
     polygon;  % (:,2) Polygon coords
     range;    % (2) Range of values [low,high]
   end
   methods
-    function obj=Gate(name,parent,vars,islog,polygon)
+    function obj=Gate(name,parent,vars,islog,polygon,isnot)
     % Construct a gate using either Gate(name,parent,expr), Gate(name,parent,vars,islog,polygon), or Gate(name,parent,vars,islog,range)
       obj.name=name;
       obj.parent=parent;
-      if nargin==3
+      if nargin==6
+        obj.islog=0;
+        obj.gatetype=4;
+        obj.vars=vars;
+      elseif nargin==3
         obj.expr=vars;
         obj.gatetype=1;
       else
@@ -38,7 +42,7 @@ classdef Gate < handle;
     function s=desc(obj)   
       if obj.gatetype==1
         s=sprintf('%s',obj.expr);
-      elseif obj.gatetype==2 || obj.gatetype==3
+      elseif obj.gatetype==2 || obj.gatetype==3 || obj.gatetype==4
         for j=1:length(obj.vars)
           if obj.islog(j)
             v{j}=['log10(',obj.vars{j},')'];
@@ -48,8 +52,10 @@ classdef Gate < handle;
         end
         if obj.gatetype==2
           s=sprintf('POLYGON(%s,%s) [%s]',v{1},v{2},sprintf('(%f,%f) ',obj.polygon));
-        else
+        elseif obj.gatetype==3
           s=sprintf('RANGE(%s) [%f,%f]',v{1},obj.range);
+        else
+          s=sprintf('NOT(%s)',v{1});
         end
       end
     end
@@ -79,6 +85,8 @@ classdef Gate < handle;
         end
         plot([r(1),r(1)],c(3:4),'r:');
         plot([r(2),r(2)],c(3:4),'r:');
+      elseif obj.gattetype==4
+        fprintf('Ignoring draw of NOT gate\n');
       else
         error('Bad gatetype: %d\n', obj.gatetype);
       end

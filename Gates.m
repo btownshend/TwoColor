@@ -52,6 +52,15 @@ classdef Gates < handle
       obj.g{end+1}=Gate(name,parent,{vname},islog,range);
     end
     
+    function addnot(obj,name,vname,parent)
+      if nargin<6
+        parent=nan;
+      elseif ~isnumeric(parent)
+        parent=obj.lookup(parent);
+      end
+      obj.g{end+1}=Gate(name,parent,{vname},[],[],1);
+    end
+    
     function num=lookup(obj,name)
       for num=1:length(obj.g)
         if strcmp(obj.g{num}.name,name)
