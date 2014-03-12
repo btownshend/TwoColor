@@ -5,12 +5,6 @@
 % Gates are setup using Gates class
 % Options are:
 %  usegate: name of gate to use
-%  bins: bins for doing multi-way sorting
-%  sortbins: generate this number of bins automatically
-%  firstbin: ratio for lowest bin edge
-%  lastbin: ratio for highest bin edge
-%  maingates: gates for bins stored in Gates
-%  normalizeratios: true to normalize the ratios
 %  maxevents: maximum events per file
 %  desc: cell array of descriptions for each file for plot labeling 
 %    if desc contains the substring '-theo' or '+theo' those traces are distinguished
@@ -19,18 +13,9 @@ function f=twocolor(fnames,gates,varargin)
     error('Usage: twocolor(fnames,gates,[options])\n');
   end
   defaults=struct('usegate','',...
-                  'bins',[],...
-                  'sortbins',8,...
-                  'firstbin',[],...
-                  'lastbin',[],...
-                  'maingates',{{}},...
                   'ratiorange',[1e-2,20],...
-                  'normalizeratios',false,...
                   'maxevents',1000000,...
-                  'desc',{{}},...
-                  'plotdensity',true,...
-                  'plotratios',true,...
-                  'title','');
+                  'desc',{{}});
   args=processargs(defaults,varargin);
 
   if isstruct(fnames)
@@ -91,6 +76,7 @@ function f=twocolor(fnames,gates,varargin)
   end
   
   usegatenum=gates.lookup(args.usegate);
+  f.usegatenum=usegatenum;
   fprintf('Using gate %s (%d)\n', args.usegate,usegatenum);
   
   % Print data summary
@@ -122,131 +108,21 @@ function f=twocolor(fnames,gates,varargin)
     title(sprintf('DAPI Live/Dead Theshold (%.0f)',args.dapithresh));
   end
 
-  if args.plotdensity
-    % Plot all the density of GFP vs. mCherry
-    setfig([f(1).fname,' GFPvsCherry']); clf;
-    lastcells='';
-
-    slow=1e10; shigh=1;
-    glow=1e10; ghigh=1;
-    for i=1:length(f)
-      sel=f(i).P(usegatenum,:);
-      sel=f(i).cherry>0 & f(i).gfp>0;
-      sch=sort(f(i).cherry(sel));slow=min(slow,10^floor(log10(sch(round(length(sch)*.02)))));shigh=max(shigh,10^ceil(log10(sch(round(length(sch)*.98)))));
-      sgfp=sort(f(i).gfp(sel));glow=min(glow,10^floor(log10(sgfp(round(length(sgfp)*.02)))));ghigh=max(ghigh,10^ceil(log10(sgfp(round(length(sgfp)*.98)))));
-    end
-    
-    for i=1:length(f)
-      sel=f(i).P(usegatenum,:);
-      %    sel=f(i).cherry>0 & f(i).gfp>0;
-      gfpval=exp(mean(log(f(i).gfp(sel))));
-
-      val=sum(f(i).gfp(sel))/sum(f(i).cherry(sel));
-      subplot(ceil(length(f)/2),1+(length(f)>1),i);
-      densplot(f(i).cherry(sel),f(i).gfp(sel),[],[slow shigh glow ghigh],1);
-      xlabel('mCherry');
-      ylabel('GFP');
-      info=sprintf('%16s G=%4.0f G/C=%4.3g ',f(i).hdr.cells,gfpval,val);
-      title(info,'Interpreter','none');
-      disp([fnames{i},': ',info])
-      lastcells=f(i).hdr.cells;
-    end
-    suptitle(strrep(args.title,'_','-'));
-  end
-
-  if args.plotratios
-    % Plot the GFP/mCherry ratios
-    legh=[];
-    legv={};
-    ti='';
-
-    setfig([f(1).fname,' Bin edges']);clf;
-
-    edges=[];
-    if ~isempty(args.bins)
-      edges=args.bins;
-    elseif ~isempty(args.maingates)
-      for i=1:length(args.maingates)
-        edges(i*2-1)=args.maingates{i}(1);
-        edges(i*2)=args.maingates{i}(2);
-      end
-    elseif args.sortbins>0 && sum(f(i).P(usegatenum,:))>100
-      sortratio=sort(f(i).ratio(f(i).P(usegatenum,:)));
-      midratio=exp(mean(log(sortratio(round([.05,.95]*length(sortratio))))));
-      fprintf('Mid ratio = %g\n', midratio);
-      if isempty(args.firstbin)
-        low=sortratio(sortratio<midratio);
-        args.firstbin=low(round(0.5*length(low)));
-        fprintf('First bin at %g\n',args.firstbin);
-      end
-      if isempty(args.lastbin)
-        high=sortratio(sortratio>midratio);
-        args.lastbin=high(round(0.90*length(high)));
-        fprintf('Last bin at %g\n',args.lastbin);
-      end
-      edges=args.firstbin*(args.lastbin/args.firstbin).^((0:(args.sortbins-2))/(args.sortbins-2));
-    end
-    
-    
-    cols='bcmyrg';
-    for i=1:length(f)
-      x=f(i).data;
-      hdr=f(i).hdr;
-      P=f(i).P;
-      ratio=f(i).ratio(P(usegatenum,:));
-      f(i).N=length(ratio);
-      if length(ratio)<100
-        f(i).mu=nan;
-        f(i).sigma=nan;
-        continue;
-      end
-      second=0;
-      if ~isempty([strfind(hdr.cells,'+theo'),strfind(hdr.cells,'+ theo'),strfind(f(i).fname,'+theo')])
-        col='g';
-      elseif ~isempty([strfind(hdr.cells,'-theo'),strfind(hdr.cells,'- theo'),strfind(f(i).fname,'-theo')])
-        col='r';
-      else
-        col=cols(mod(i-1,length(cols))+1);
-      end
-      if args.normalizeratios
-        legh(end+1)=pdfplot(ratio/median(ratio),col,1,round(length(ratio)/200));
-      else
-        legh(end+1)=pdfplot(ratio,col,1,round(length(ratio)/200));
-      end
-      hold on;
+  % Calculate ratios
+  for i=1:length(f)
+    ratio=f(i).ratio(f(i).P(usegatenum,:));
+    f(i).N=length(ratio);
+    if length(ratio)<100
+      f(i).mu=nan;
+      f(i).sigma=nan;
+    else
       % Calculate std of log(normal) distribution with extreme points removed
       stdev=std(log(ratio((ratio/median(ratio))>0.25&(ratio/median(ratio))<4)));
-      legv{end+1}=sprintf('%s (mu=%.3f,sigma=%.2f,N=%d)',hdr.cells,median(ratio),exp(stdev),length(ratio));
       f(i).mu=median(ratio);
       f(i).sigma=exp(stdev);
-      ti=[ti,', ',hdr.cells];
     end
-    ti=ti(3:end);  % Remove leading ', '
-    if ~isempty(edges)
-      f(i).edges=edges;
-      fprintf('Edges for %s are [%s]\nPcts: ',hdr.cells,sprintf('%.2g ',edges));
-      cum=0;
-      c=axis;
-      for k=1:length(edges)
-        plot([edges(k),edges(k)],c(3:4),':');
-        fprintf('%.1f%% ',(sum(ratio<edges(k))-cum)/length(ratio)*100);
-        cum=sum(ratio<edges(k));
-      end
-      fprintf('%.1f%%\n',(length(ratio)-cum)/length(ratio)*100);
-    else
-      f(i).edges=nan;
-    end
-
-    c=axis;
-    c(1:2)=args.ratiorange;
-    axis(c);
-    xlabel('GFP/mCherry');
-    if ~isempty(args.title)
-      ti=args.title;
-    end
-    title(ti,'Interpreter','none');
-    legend(legh,legv,'Interpreter','none','Location','NorthWest');
   end
+  
 end
 
 % Locate which channel number corresponds to a particular field
