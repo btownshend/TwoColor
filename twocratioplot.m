@@ -59,6 +59,10 @@ for i=1:length(f)
   hdr=f(i).hdr;
   P=f(i).P;
   ratio=f(i).ratio(P(f(i).usegatenum,:));
+  if length(ratio)<200
+    fprintf('Only %d data for %s; skipping\n',length(ratio), f(i).hdr.cells);
+    continue;
+  end
   second=0;
   if ~isempty([strfind(hdr.cells,'+theo'),strfind(hdr.cells,'+ theo'),strfind(f(i).fname,'+theo')])
     col='g';
