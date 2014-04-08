@@ -15,6 +15,7 @@ function f=twocolor(fnames,gates,varargin)
   defaults=struct('usegate','',...
                   'ratiorange',[1e-2,20],...
                   'maxevents',1000000,...
+                  'compensation',0,...
                   'desc',{{}});
   args=processargs(defaults,varargin);
 
@@ -65,6 +66,9 @@ function f=twocolor(fnames,gates,varargin)
         % Kludge - fake DAPI as 300.0 so gates work
         f(i).dapi=300*ones(size(f(i).fsca));
       end
+      
+      % Apply compensation
+      f(i).gfp=f(i).gfp-args.compensation*f(i).cherry;
       
       f(i).ratio=f(i).gfp./f(i).cherry;
 
