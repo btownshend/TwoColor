@@ -72,9 +72,9 @@ for i=1:length(f)
     col=cols(mod(i-1,length(cols))+1);
   end
   if args.normalizeratios
-    legh(end+1)=pdfplot(ratio/median(ratio),col,1,round(length(ratio)/200));
+    legh(end+1)=pdfplot(ratio/median(ratio),col,1,max(10,round(length(ratio)/200)));
   else
-    legh(end+1)=pdfplot(ratio,col,1,round(length(ratio)/200));
+    legh(end+1)=pdfplot(ratio,col,1,max(10,round(length(ratio)/200)));
   end
   hold on;
   legv{end+1}=sprintf('%s (mu=%.3f,sigma=%.2f,N=%d)',hdr.cells,f(i).mu,f(i).sigma,f(i).N);
