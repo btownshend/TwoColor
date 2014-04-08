@@ -16,13 +16,13 @@ for i=1:length(f)
   sel=f(i).P(f(i).usegatenum,:);
   %    sel=f(i).cherry>0 & f(i).gfp>0;
   gfpval=exp(mean(log(f(i).gfp(sel))));
+  chval=exp(mean(log(f(i).cherry(sel))));
 
-  val=sum(f(i).gfp(sel))/sum(f(i).cherry(sel));
   subplot(ceil(length(f)/2),1+(length(f)>1),i);
   densplot(f(i).cherry(sel),f(i).gfp(sel),[],[slow shigh glow ghigh],1);
   xlabel('mCherry');
   ylabel('GFP');
-  info=sprintf('%16s G=%4.0f G/C=%4.3g ',f(i).hdr.cells,gfpval,val);
+  info=sprintf('%16s G=%4.0f R=%.0f mu=%4.3g ',f(i).hdr.cells,gfpval,chval,f(i).mu);
   title(info,'Interpreter','none');
   lastcells=f(i).hdr.cells;
 end
