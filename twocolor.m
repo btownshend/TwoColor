@@ -80,7 +80,9 @@ function f=twocolor(fnames,gates,varargin)
   end
   
   usegatenum=gates.lookup(args.usegate);
-  f.usegatenum=usegatenum;
+  for i=1:length(f)
+    f(i).usegatenum=usegatenum;
+  end
   fprintf('Using gate %s (%d)\n', args.usegate,usegatenum);
   
   % Print data summary
