@@ -23,6 +23,10 @@ for i=1:length(f)
   xlabel('mCherry');
   ylabel('GFP');
   info=sprintf('%16s G=%4.0f R=%.0f mu=%4.3g ',f(i).hdr.cells,gfpval,chval,f(i).mu);
+  c=axis;
+  r=[max(min(f(i).cherry(sel)),min(f(i).gfp(sel))/f(i).mu),min(max(f(i).cherry(sel)),max(f(i).gfp(sel))/f(i).mu)];
+  hold on;
+  plot(r,r*f(i).mu,'y');
   title(info,'Interpreter','none');
   lastcells=f(i).hdr.cells;
 end
