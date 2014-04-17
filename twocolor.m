@@ -127,6 +127,12 @@ function f=twocolor(fnames,gates,varargin)
       f(i).mu=median(ratio);
       f(i).sigma=exp(stdev);
     end
+    fc=calcmu(f(i));
+    % Copy (dissimilar) struct
+    fnames=fieldnames(fc);
+    for fi=1:length(fnames)
+      f(i).(fnames{fi})=fc.(fnames{fi});
+    end
   end
   
 end
