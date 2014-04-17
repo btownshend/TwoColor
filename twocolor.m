@@ -77,7 +77,9 @@ function f=twocolor(fnames,gates,varargin)
       f(i).gfp=f(i).gfp-args.compensation*f(i).cherry;
       
       f(i).ratio=f(i).gfp./f(i).cherry;
-
+      if isfield(f(i),'fsca') && isfield(f(i),'fsch')
+        f(i).fscw=f(i).fsca./f(i).fsch;
+      end
 
       % Form gates
       f(i).P=gates.applyall(f(i));
