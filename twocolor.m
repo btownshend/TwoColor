@@ -31,6 +31,12 @@ function f=twocolor(fnames,gates,varargin)
     
     
     for i=1:length(fnames)
+      fileinfo=dir(fnames{i});
+      if isempty(fileinfo) || fileinfo.bytes==0
+        fprintf('File %s does not exist or is empty\n', fnames{i});
+        fileinfo
+        return;
+      end
       fprintf('Loading %s...',fnames{i});
       [unscdata,f(i).hdr,f(i).data]=fca_readfcs(fnames{i});
       fprintf('read %d events\n', size(f(i).data,1));
