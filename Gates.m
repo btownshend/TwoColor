@@ -146,6 +146,9 @@ classdef Gates < handle
     end
 
     function plot(obj, x, name)
+      if isempty(x)
+        return;
+      end
       gnum=obj.lookup(name);
       gate=obj.g{gnum};
       parent=gate.parent;
