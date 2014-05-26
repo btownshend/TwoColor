@@ -6,10 +6,10 @@ lastcells='';
 slow=1e10; shigh=1;
 glow=1e10; ghigh=1;
 for i=1:length(f)
-  sel=f(i).P(f(i).usegatenum,:);
-  sel=f(i).cherry>0 & f(i).gfp>0;
-  sch=sort(f(i).cherry(sel));slow=min(slow,10^floor(log10(sch(round(length(sch)*.02)))));shigh=max(shigh,10^ceil(log10(sch(round(length(sch)*.98)))));
-  sgfp=sort(f(i).gfp(sel));glow=min(glow,10^floor(log10(sgfp(round(length(sgfp)*.02)))));ghigh=max(ghigh,10^ceil(log10(sgfp(round(length(sgfp)*.98)))));
+  sel=f(i).P(f(i).usegatenum,:)';
+  sel=sel & f(i).cherry>0 & f(i).gfp>0;
+  sch=prctile(f(i).cherry(sel),[2,99]);slow=min(slow,sch(1)/1.02);shigh=max(shigh,sch(2)*1.02);
+  sgfp=prctile(f(i).gfp(sel),[2,99]);glow=min(glow,sgfp(1)/1.02);ghigh=max(ghigh,sgfp(2)*1.02);
 end
 
 for i=1:length(f)
@@ -22,7 +22,7 @@ for i=1:length(f)
   densplot(f(i).cherry(sel),f(i).gfp(sel),[],[slow shigh glow ghigh],1);
   xlabel('mCherry');
   ylabel('GFP');
-  info=sprintf('%16s G=%4.0f R=%.0f mu=%4.3g ',f(i).hdr.cells,gfpval,chval,f(i).mu);
+  info=sprintf('%16s N=%d G=%4.0f R=%.0f mu=%4.3g ',f(i).hdr.cells,sum(sel),gfpval,chval,f(i).mu);
   c=axis;
   r=[max(min(f(i).cherry(sel)),min(f(i).gfp(sel))/f(i).mu),min(max(f(i).cherry(sel)),max(f(i).gfp(sel))/f(i).mu)];
   hold on;
