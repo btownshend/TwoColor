@@ -8,6 +8,7 @@
 %  maxevents: maximum events per file
 %  desc: cell array of descriptions for each file for plot labeling 
 %    if desc contains the substring '-theo' or '+theo' those traces are distinguished
+%  cherryonly: two color data structure for mCherry-only under same conditions as test sample; used for compensation
 function f=twocolor(fnames,gates,varargin)
   if nargin<2
     error('Usage: twocolor(fnames,gates,[options])\n');
@@ -15,7 +16,7 @@ function f=twocolor(fnames,gates,varargin)
   defaults=struct('usegate','',...
                   'ratiorange',[1e-2,20],...
                   'maxevents',1000000,...
-                  'compensation',0,...
+                  'comp',[],...
                   'desc',{{}});
   args=processargs(defaults,varargin);
 
@@ -74,14 +75,22 @@ function f=twocolor(fnames,gates,varargin)
       end
       
       % Apply compensation
-      f(i).gfp=f(i).gfp-args.compensation*f(i).cherry;
+      if ~isempty(args.comp) 
+        f(i)=args.comp.apply(f(i));
+        f(i).comp=args.comp;
+      end
+
+      % Computed pratio - for plasmid counting
+      f(i).pratio=f(i).cherry./f(i).ssca;
       
+      % GFP/mCherry ratio
       f(i).ratio=f(i).gfp./f(i).cherry;
       if isfield(f(i),'fsca') && isfield(f(i),'fsch')
         f(i).fscw=f(i).fsca./f(i).fsch;
       end
 
       % Form gates
+      f(i).gates=gates;
       f(i).P=gates.applyall(f(i));
       gates.printstats(f(i));
     end
