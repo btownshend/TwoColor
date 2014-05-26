@@ -3,6 +3,7 @@
 % Instead reference everything to a reference level of cherry (15000 for the VYB)
 function f=calcmu(f,varargin)
 defaults=struct('doplot',false,...
+                'nonlinear',false,...
                 'refcherry',15000);
 args=processargs(defaults,varargin);
 
@@ -10,12 +11,17 @@ args=processargs(defaults,varargin);
 sel=f.P(f.usegatenum,:)';
 
 % Calculate non-linear compensation
-pf=polyfit(log(f.cherry(sel)),log(f.gfp(sel)),1);
-ratio=(f.gfp./((f.cherry/args.refcherry).^pf(1)*args.refcherry));
+if args.nonlinear
+  pf=polyfit(log(f.cherry(sel)),log(f.gfp(sel)),1);
+  ratio=(f.gfp./((f.cherry/args.refcherry).^pf(1)*args.refcherry));
+else
+  ratio=f.gfp./f.cherry;
+end
+
 mu=median(ratio(sel));
 
 %fprintf('Using reference cherry of %.0f\n', args.refcherry);
-if args.doplot
+if args.nonlinear && args.doplot
   ratiosel=sel & f.ratio<f.mu*3 & f.ratio>f.mu/3;  % Plot over this range
   % Compensation plot
   setfig('calcmu-comp');clf;
@@ -55,18 +61,17 @@ if args.doplot
   fprintf('Corrected mu = %.3f [%.3f,%.3f] std=%.3f (exp=%.2f)\n', mu, prctile(ratio(sel),10),prctile(ratio(sel),90),std(log(ratio(sel))),pf(1));
 end
 
-if isfield(f,'mu') & ~isfield(f,'oldmu')
-  f.oldmu=f.mu;
-  f.oldsigma=f.sigma;
-end
 f.mu=mu;
 % Calculate std of log(normal) distribution with extreme points removed
-stdev=std(log(ratio((ratio/f.mu)>0.25&(ratio/f.mu)<4)));
+stdev=std(log(ratio(sel&(ratio/f.mu)>0.25&(ratio/f.mu)<4)));
 f.sigma=exp(stdev);
 f.muci80=prctile(f.ratio(sel),[10,90]);
-f.refcherry=args.refcherry;
-f.compexponent=pf(1);
-f.compratio=ratio;
+
+if args.nonlinear
+  f.refcherry=args.refcherry;
+  f.compexponent=pf(1);
+  f.compratio=ratio;
+end
 
 
 
