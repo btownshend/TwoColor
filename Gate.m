@@ -51,7 +51,7 @@ classdef Gate < handle;
           end
         end
         if obj.gatetype==2
-          s=sprintf('POLYGON(%s,%s) [%s]',v{1},v{2},sprintf('(%f,%f) ',obj.polygon));
+          s=sprintf('POLYGON(%s,%s) [%s]',v{1},v{2},sprintf('(%f,%f) ',obj.polygon'));
         elseif obj.gatetype==3
           s=sprintf('RANGE(%s) [%f,%f]',v{1},obj.range);
         else
