@@ -187,6 +187,8 @@ if strcmp(s,'FSC-H')
   s='fsch';
 elseif strcmp(s,'FSC-A')
   s='fsca';
+elseif strcmp(s,'FSC-W')
+  s='fscw';
 elseif strcmp(s,'SSC-A')
   s='ssca';
 elseif strcmp(s,'SSC-H')
@@ -201,4 +203,6 @@ elseif strcmp(s,'Ratio: FITC-A/mCherry-A')
   s='ratio';
 elseif strcmp(s,'Pacific Blue-A')
   s='dapi';
+elseif strcmp(s,'PE-Texas Red-A')
+  s='cherry';
 end
