@@ -191,7 +191,7 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
     fcshdr.system = get_mnemonic_value('$SYS',fcsheader_main, mnemonic_separator);
     fcshdr.project = get_mnemonic_value('$PROJ',fcsheader_main, mnemonic_separator);
     fcshdr.experiment = get_mnemonic_value('$EXP',fcsheader_main, mnemonic_separator);
-    fcshdr.cells = get_mnemonic_value('$Cells',fcsheader_main, mnemonic_separator);
+    fcshdr.cells = get_mnemonic_value('$CELLS',fcsheader_main, mnemonic_separator);
     fcshdr.creator = get_mnemonic_value('CREATOR',fcsheader_main, mnemonic_separator);
     fcshdr.comment = get_mnemonic_value('$COM',fcsheader_main, mnemonic_separator);
     fcshdr.csmode = get_mnemonic_value('$CSMODE',fcsheader_main, mnemonic_separator);
@@ -216,7 +216,8 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
     fcshdr.vol = get_mnemonic_value('$VOL',fcsheader_main, mnemonic_separator);
     fcshdr.wellid = get_mnemonic_value('$WELLID',fcsheader_main, mnemonic_separator);
     fcshdr.spill = get_mnemonic_value('SPILL',fcsheader_main, mnemonic_separator); %spillover factor for Fl. compensation
-    
+    fcshdr.tube = get_mnemonic_value('TUBE NAME',fcsheader_main, mnemonic_separator);
+    fcshdr.expt = get_mnemonic_value('EXPERIMENT NAME',fcsheader_main, mnemonic_separator);
  % Create the Fluorescence compensation matrix if spillover data exist in the header
  % This option was implemented with the help of Rick Stanton (jcvi, la jolla, ca)
     if ~isempty(fcshdr.spill) 
@@ -393,7 +394,7 @@ if strcmp(mnemonic_separator,'\')  || strcmp(mnemonic_separator,'!') ...
 elseif strcmp(mnemonic_separator,'FF')
     mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
     if isempty(mnemonic_startpos)
-      fprintf('%s not found in FCS header\n', mnemonic_name);
+      %fprintf('%s not found in FCS header\n', mnemonic_name);
         mneval = '';
         return;
     end
