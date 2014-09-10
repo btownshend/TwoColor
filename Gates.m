@@ -93,7 +93,7 @@ classdef Gates < handle
         v=[];
         for i=1:length(obj.g{gnum}.vars)
           v(:,i)=x.(obj.g{gnum}.vars{i});
-          if obj.g{gnum}.islog;
+          if obj.g{gnum}.islog(i);
             fracneg=mean(v(:,i)<0);
             if fracneg>0.01
               fprintf('Warning: Ignoring %.2f%% of data that is negative\n', fracneg*100);
@@ -105,14 +105,14 @@ classdef Gates < handle
         sel=sel&inpolygon(v(:,1),v(:,2),obj.g{gnum}.polygon(:,1),obj.g{gnum}.polygon(:,2));
       elseif obj.g{gnum}.gatetype==3 % Range gate
         v=x.(obj.g{gnum}.vars{1});
-        % if obj.g{gnum}.islog
-        %   fracneg=mean(v<0);
-        %   if fracneg>0.01
-        %     fprintf('Warning: Ignoring %.2f%% of data that is negative\n', fracneg*100);
-        %   end
-        %   v(v>0)=log10(v(v>0));
-        %   v(v<=0)=nan;
-        % end
+        if obj.g{gnum}.islog
+          fracneg=mean(v<0);
+          if fracneg>0.01
+            fprintf('Warning: Ignoring %.2f%% of data that is negative\n', fracneg*100);
+          end
+          v(v>0)=log10(v(v>0));
+          v(v<=0)=nan;
+        end
         sel=sel&v>=obj.g{gnum}.range(1)&v<=obj.g{gnum}.range(2);
       end
     end
