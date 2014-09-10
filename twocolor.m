@@ -57,12 +57,13 @@ function f=twocolor(fnames,gates,varargin)
       sscw=findchannel(f(i).hdr.par,'SSC-W',{},0);
       ssch=findchannel(f(i).hdr.par,'SSC-H',{},0);
       fsch=findchannel(f(i).hdr.par,'FSC-H',{},0);
+      fscw=findchannel(f(i).hdr.par,'FSC-W',{},0);
       gfp=findchannel(f(i).hdr.par,'GFP',{'GFP-A','B1-A','FITC-A','525/50 [488]'},1);
       cherry=findchannel(f(i).hdr.par,'mCherry-A',{'Y2-A','610/20 [561]'},1);
       dapi=findchannel(f(i).hdr.par,'DAPI-A',{'V1-A','460/50 [405]'},0);  % Optional 
       triggerPW=findchannel(f(i).hdr.par,'Trigger Pulse Width',{},0);
       % Copy channels to explicit fields in f(i)
-      channels={'fsca','fsch','ssca','sscw','ssch','gfp','cherry','dapi','triggerPW'};
+      channels={'fsca','fsch','fscw','ssca','sscw','ssch','gfp','cherry','dapi','triggerPW'};
       for j=1:length(channels)
         channel=channels{j};
         if ~isempty(eval(channel))
@@ -85,8 +86,11 @@ function f=twocolor(fnames,gates,varargin)
       
       % GFP/mCherry ratio
       f(i).ratio=f(i).gfp./f(i).cherry;
-      if isfield(f(i),'fsca') && isfield(f(i),'fsch')
+
+      % Fake FSCW if it is not in file
+      if isfield(f(i),'fsca') && isfield(f(i),'fsch') && ~isfield(f(i),'fscw')
         f(i).fscw=f(i).fsca./f(i).fsch;
+        fprintf('Faking FSCW channel\n');
       end
 
       % Form gates
