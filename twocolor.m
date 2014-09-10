@@ -19,7 +19,9 @@ function f=twocolor(fnames,gates,varargin)
                   'comp',[],...
                   'desc',{{}});
   args=processargs(defaults,varargin);
-
+  if isempty(args.usegate)
+    error('Must specify ''usegate'' on function call');
+  end
   if isstruct(fnames)
     fprintf('Using already loaded data\n');
     f=fnames;
@@ -48,8 +50,12 @@ function f=twocolor(fnames,gates,varargin)
       f(i).fname=fnames{i};
       if ~isempty(args.desc)
         f(i).hdr.cells=args.desc{i};
-      elseif isempty(f(i).hdr.cells)
-        f(i).hdr.cells=f(i).fname;
+      elseif isempty(f(i).hdr.cells) 
+        if ~isempty(f(i).hdr.tube)
+          f(i).hdr.cells=f(i).hdr.tube;
+        else
+          f(i).hdr.cells=f(i).fname;
+        end
       end
       % Channel mapping for devices used
       fsca=findchannel(f(i).hdr.par,'FSC-A',{'*FSC'},1);
@@ -73,6 +79,7 @@ function f=twocolor(fnames,gates,varargin)
       if ~isfield(f(i),'dapi') || isempty(f(i).dapi)
         % Kludge - fake DAPI as 300.0 so gates work
         f(i).dapi=300*ones(size(f(i).fsca));
+        fprintf('Faking DAPI channel\n');
       end
       
       % Apply compensation
