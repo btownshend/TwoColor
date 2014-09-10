@@ -53,7 +53,7 @@ classdef Gates < handle
     end
     
     function addnot(obj,name,vname,parent)
-      if nargin<6
+      if nargin<4
         parent=nan;
       elseif ~isnumeric(parent)
         parent=obj.lookup(parent);
@@ -102,6 +102,9 @@ classdef Gates < handle
             v(v(:,i)<=0,i)=nan;
           end
         end
+        % if strcmp(obj.g{gnum}.vars{2},'fscw')
+        %   keyboard;
+        % end
         sel=sel&inpolygon(v(:,1),v(:,2),obj.g{gnum}.polygon(:,1),obj.g{gnum}.polygon(:,2));
       elseif obj.g{gnum}.gatetype==3 % Range gate
         v=x.(obj.g{gnum}.vars{1});
@@ -132,20 +135,27 @@ classdef Gates < handle
     end
 
     function printstats(obj,x)
-      fprintf('Population Parent Events %%Parent  %%Total\n');
       p=applyall(obj,x);
       total=size(p,2);
+      fprintf(' # %20.20s Parent Events %%Parent  %%Total\n','Gate');
       for i=1:length(obj.g)
         if isfinite(obj.g{i}.parent)
           psize=sum(p(obj.g{i}.parent,:));
         else
           psize=total;
         end
-        fprintf('%10s %3d   %7d  %6.2f  %6.2f %s\n',obj.g{i}.name,obj.g{i}.parent,sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.g{i}.desc());
+        nm=obj.g{i}.name;
+        if length(nm)>20
+          nm=['..',nm(end-17:end)];
+        end
+        fprintf('%2d %20.20s %3d   %7d  %6.2f  %6.2f %s\n',i,nm,obj.g{i}.parent,sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.g{i}.desc());
       end
     end
 
-    function plot(obj, x, name)
+    function plot(obj, x, name,figname)
+      if nargin<4
+        figname=name;
+      end
       if isempty(x)
         return;
       end
@@ -158,7 +168,7 @@ classdef Gates < handle
         psel=true(size(x.data,1),1);
       end
       sel=obj.apply(x,gnum);
-      setfig(name);
+      setfig(figname);
       clf;
       if gate.gatetype<=2
         v1=gate.vars{1};
