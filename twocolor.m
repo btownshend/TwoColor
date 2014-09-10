@@ -59,8 +59,8 @@ function f=twocolor(fnames,gates,varargin)
       fsch=findchannel(f(i).hdr.par,'FSC-H',{},0);
       fscw=findchannel(f(i).hdr.par,'FSC-W',{},0);
       gfp=findchannel(f(i).hdr.par,'GFP',{'GFP-A','B1-A','FITC-A','525/50 [488]'},1);
-      cherry=findchannel(f(i).hdr.par,'mCherry-A',{'Y2-A','610/20 [561]'},1);
-      dapi=findchannel(f(i).hdr.par,'DAPI-A',{'V1-A','460/50 [405]'},0);  % Optional 
+      cherry=findchannel(f(i).hdr.par,'mCherry-A',{'Y2-A','610/20 [561]','PE-Texas Red-A'},1);
+      dapi=findchannel(f(i).hdr.par,'DAPI-A',{'V1-A','460/50 [405]','Pacific Blue-A'},0);  % Optional 
       triggerPW=findchannel(f(i).hdr.par,'Trigger Pulse Width',{},0);
       % Copy channels to explicit fields in f(i)
       channels={'fsca','fsch','fscw','ssca','sscw','ssch','gfp','cherry','dapi','triggerPW'};
