@@ -1,4 +1,4 @@
-% Apply non-lineary compensation and compute gfp/mcherry ratio
+% Apply non-linear compensation and compute gfp/mcherry ratio
 % With a non-linearity, there is no "global" ratio
 % Instead reference everything to a reference level of cherry (15000 for the VYB)
 function f=calcmu(f,varargin)
@@ -30,10 +30,15 @@ if args.nonlinear && args.doplot
   xlabel('Cherry');
   ylabel('Ratio');
   c=axis;
-  title(sprintf('%s: uncompensated',f.desc));
+  if isfield(f,'desc')
+    desc=f.desc;
+  else
+    desc=f.hdr.cells;
+  end
+  title(sprintf('%s: uncompensated',desc));
   subplot(212);
   densplot(f.cherry(ratiosel),ratio(ratiosel),[],[],true);
-  title(sprintf('%s: compensated with %.2f',f.desc,pf(1)));
+  title(sprintf('%s: compensated with %.2f',desc,pf(1)));
   xlabel('Cherry');
   ylabel('Ratio');
   axis(c);
