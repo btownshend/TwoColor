@@ -96,7 +96,7 @@ classdef Gates < handle
           if obj.g{gnum}.islog(i);
             fracneg=mean(v(:,i)<0);
             if fracneg>0.01
-              fprintf('Warning: Ignoring %.2f%% of data that is negative\n', fracneg*100);
+              fprintf('Gates.apply: Warning, ignoring %.1f%% of events that have negative values for %s\n', fracneg*100, obj.g{gnum}.vars{i});
             end
             v(v(:,i)>0,i)=log10(v(v(:,i)>0,i));
             v(v(:,i)<=0,i)=nan;
@@ -109,14 +109,10 @@ classdef Gates < handle
       elseif obj.g{gnum}.gatetype==3 % Range gate
         v=x.(obj.g{gnum}.vars{1});
         if obj.g{gnum}.islog
-          fracneg=mean(v<0);
-          if fracneg>0.01
-            fprintf('Warning: Ignoring %.2f%% of data that is negative\n', fracneg*100);
-          end
-          v(v>0)=log10(v(v>0));
-          v(v<=0)=nan;
+          sel=sel&v>=10.^obj.g{gnum}.range(1)&v<=10.^obj.g{gnum}.range(2);
+        else
+          sel=sel&v>=obj.g{gnum}.range(1)&v<=obj.g{gnum}.range(2);
         end
-        sel=sel&v>=obj.g{gnum}.range(1)&v<=obj.g{gnum}.range(2);
       end
     end
 
@@ -152,9 +148,12 @@ classdef Gates < handle
       end
     end
 
-    function plot(obj, x, name,figname)
+    function plot(obj, x, name,figname, dosubplots)
       if nargin<4
         figname=name;
+      end
+      if nargin<5
+        dosubplots=false;
       end
       if isempty(x)
         return;
@@ -168,21 +167,25 @@ classdef Gates < handle
         psel=true(size(x.data,1),1);
       end
       sel=obj.apply(x,gnum);
-      setfig(figname);
-      clf;
+      if ~isempty(figname)
+        setfig(figname);
+        clf;
+      end
       if gate.gatetype<=2
         v1=gate.vars{1};
         v2=gate.vars{2};
         v1log=gate.islog(1);
         v2log=gate.islog(2);
-        subplot(211);
-        [~,range]=densplot(x.(v1),x.(v2),[],[],v1log||v2log);
-        xlabel(v1);
-        ylabel(v2);
-        title('All events');
-        gate.drawgate();
+        if dosubplots
+          subplot(211);
+          [~,range]=densplot(x.(v1),x.(v2),[],[],v1log||v2log);
+          xlabel(v1);
+          ylabel(v2);
+          title('All events');
+          gate.drawgate();
 
-        subplot(212);
+          subplot(212);
+        end
         densplot(x.(v1)(psel),x.(v2)(psel),[],range,v1log||v2log);
         xlabel(v1);
         ylabel(v2);
@@ -201,13 +204,15 @@ classdef Gates < handle
         % end
       else % Range gate
         v1=gate.vars{1};
-        subplot(211);
-        pdfplot(x.(v1),[],gate.islog);
-        xlabel(v1);
-        title('All events');
-        gate.drawgate();
+        if dosubplots
+          subplot(211);
+          pdfplot(x.(v1),[],gate.islog);
+          xlabel(v1);
+          title('All events');
+          gate.drawgate();
 
-        subplot(212);
+          subplot(212);
+        end
         pdfplot(x.(v1)(psel),[],gate.islog);
         xlabel(v1);
         title('Included in parent gate');
