@@ -8,7 +8,7 @@ defaults=struct('doplot',false,...
 args=processargs(defaults,varargin);
 
 % Calculate tightened ratio
-sel=f.P(f.usegatenum,:)';
+sel=f.P(f.usegatenum,:)'&f.gfp>0;
 
 % Calculate non-linear compensation
 if args.nonlinear
