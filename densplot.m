@@ -13,8 +13,10 @@ if isempty(x)
   fprintf('densplot: Nothing to plot\n');
   return;
 end
-if dolog && (min(x)<=0 || min(y)<=0)
-  fprintf('densplot: Only plotting points > 0\n');
+if dolog
+  if mean(x<=0 | y<=0)>0.01
+    fprintf('densplot: Ignoring %.1f%% of points that are <= 0\n',mean(x<=0 | y<=0)*100);
+  end
   sel=x>0 & y>0;
   x=x(sel);
   y=y(sel);
