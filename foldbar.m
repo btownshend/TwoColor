@@ -63,4 +63,4 @@ gcapos=get(gca,'Position');
 ax=axis;
 c(1)=(p(1)-ax(1))/(ax(2)-ax(1))*gcapos(3)+gcapos(1);
 c(2)=(log(p(2))-log(ax(3)))/(log(ax(4))-log(ax(3)))*gcapos(4)+gcapos(2);
-fprintf('p=(%f,%f), c=(%f,%f)\n', p,c);
+%fprintf('p=(%f,%f), c=(%f,%f)\n', p,c);
