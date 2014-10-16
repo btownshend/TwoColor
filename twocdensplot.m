@@ -17,18 +17,20 @@ for i=1:length(f)
   %    sel=f(i).cherry>0 & f(i).gfp>0;
   gfpval=exp(mean(log(f(i).gfp(sel))));
   chval=exp(mean(log(f(i).cherry(sel))));
-  ratio=f(i).ratio(f(i).P(f(i).usegatenum,:));
-  mu=median(ratio);
   
   subplot(ceil(length(f)/2),1+(length(f)>1),i);
   densplot(f(i).cherry(sel),f(i).gfp(sel),[],[slow shigh glow ghigh],1);
   xlabel('mCherry');
   ylabel('GFP');
-  info=sprintf('%16s N=%d G=%4.0f R=%.0f mu=%4.3g ',f(i).hdr.cells,sum(sel),gfpval,chval,mu);
+  info=sprintf('%16s N=%d G=%4.0f R=%.0f mu=%4.3g ',f(i).hdr.cells,sum(sel),gfpval,chval,f(i).mu);
+  if isfield(f(i),'offset') && f(i).offset~=0
+    info=[info,sprintf('offs=%.0f ',f(i).offset)];
+  end
   c=axis;
-  r=[max(min(f(i).cherry(sel)),min(f(i).gfp(sel))/f(i).mu),min(max(f(i).cherry(sel)),max(f(i).gfp(sel))/f(i).mu)];
+  rng=[max(min(f(i).cherry(sel)),min(f(i).gfp(sel)-f(i).offset)/f(i).mu),min(max(f(i).cherry(sel)),max(f(i).gfp(sel)-f(i).offset)/f(i).mu)];
+  r=exp(log(rng(1)):.01:log(rng(2)));
   hold on;
-  plot(r,r*f(i).mu,'y');
+  plot(r,r*f(i).mu+f(i).offset,'y');
   title(info,'Interpreter','none');
   lastcells=f(i).hdr.cells;
 end
