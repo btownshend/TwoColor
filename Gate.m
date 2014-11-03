@@ -90,6 +90,27 @@ classdef Gate < handle;
         error('Bad gatetype: %d\n', obj.gatetype);
       end
     end
+
+    function range=getrange(obj)
+    % get the range:  [minx,maxx,miny,maxy] of the gate
+    % Handle log conversions
+      range=[nan,nan,nan,nan];
+      if obj.gatetype==2
+        poly=obj.polygon;
+        if obj.islog(1)
+          poly(:,1)=10.^(poly(:,1));
+        end
+        if obj.islog(2)
+          poly(:,2)=10.^(poly(:,2));
+        end
+        range(1)=min(poly(:,1));
+        range(2)=max(poly(:,1));
+        range(3)=min(poly(:,2));
+        range(4)=max(poly(:,2));
+      else
+        error('Gate.getrange does not support gate type %d\n', obj.gatetype);
+      end
+    end
   end
 end
 
