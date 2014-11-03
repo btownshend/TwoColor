@@ -133,6 +133,7 @@ classdef Gates < handle
     function printstats(obj,x)
       p=applyall(obj,x);
       total=size(p,2);
+      fprintf('Gating counts for %s\n', x.hdr.cells);
       fprintf(' # %30.30s Parent Events %%Parent  %%Total\n','Gate');
       for i=1:length(obj.g)
         if isfinite(obj.g{i}.parent)
