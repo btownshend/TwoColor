@@ -76,6 +76,8 @@ end
 if dolog(2)
   set(gca,'YScale','log');
 end
+if dolog(1)||dolog(2)
+  logticks(dolog(1),dolog(2));
 end
 caxis([0,max(max(z(2:end-2,2:end-2)))]);
 shading flat
