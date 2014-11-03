@@ -4,10 +4,10 @@ function GG=bdfacs_gates(infile)
 if nargin<1
   error('Usage: bdfacs_gates(infile)');
 end
-global x
-if ~exist('x') || isempty(x)
+%global x
+%if ~exist('x') || isempty(x)
   x=xml2struct(infile);
-end
+  %end
 if ~isfield(x,'bdfacs')
   if isfield(x,'Configuration')
     error('This appears to be an INFLUX file\n');
