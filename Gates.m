@@ -74,7 +74,7 @@ classdef Gates < handle
     % Apply a gate
       if isempty(name)
         % No gate
-        sel=true(length(x),1);
+        sel=true(size(x.data,1),1);
         return;
       elseif isnumeric(name)
         gnum=name;
@@ -85,7 +85,7 @@ classdef Gates < handle
       if isfinite(obj.g{gnum}.parent)
         sel=obj.apply(x,obj.g{gnum}.parent);
       else
-        sel=true(length(x),1);
+        sel=true(size(x.data,1),1);
       end
       if obj.g{gnum}.gatetype==1   % Expr gate
         sel=sel&eval(obj.g{gnum}.expr);
