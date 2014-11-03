@@ -176,17 +176,30 @@ classdef Gates < handle
         v2=gate.vars{2};
         v1log=gate.islog(1);
         v2log=gate.islog(2);
+        grange=gate.getrange();
+        range=[];
         if dosubplots
           subplot(211);
-          [~,range]=densplot(x.(v1),x.(v2),[],[],v1log||v2log);
+          [~,range]=densplot(x.(v1),x.(v2),[],[],[v1log,v2log]);
+          % Adjust range to include gate
+          range(1)=min(range(1),grange(1));
+          range(2)=max(range(2),grange(2));
+          range(3)=min(range(3),grange(3));
+          range(4)=max(range(4),grange(4));
+          [~,range]=densplot(x.(v1),x.(v2),[],range,[v1log,v2log]);
           xlabel(v1);
           ylabel(v2);
           title('All events');
           gate.drawgate();
-
           subplot(212);
         end
-        densplot(x.(v1)(psel),x.(v2)(psel),[],range,v1log||v2log);
+        [~,range]=densplot(x.(v1)(psel),x.(v2)(psel),[],range,[v1log,v2log]);
+        % Adjust range to include gate
+        range(1)=min(range(1),grange(1));
+        range(2)=max(range(2),grange(2));
+        range(3)=min(range(3),grange(3));
+        range(4)=max(range(4),grange(4));
+        densplot(x.(v1)(psel),x.(v2)(psel),[],range,[v1log,v2log]);
         xlabel(v1);
         ylabel(v2);
         title('Included in parent gate');
