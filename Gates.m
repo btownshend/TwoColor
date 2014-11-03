@@ -133,7 +133,7 @@ classdef Gates < handle
     function printstats(obj,x)
       p=applyall(obj,x);
       total=size(p,2);
-      fprintf(' # %20.20s Parent Events %%Parent  %%Total\n','Gate');
+      fprintf(' # %30.30s Parent Events %%Parent  %%Total\n','Gate');
       for i=1:length(obj.g)
         if isfinite(obj.g{i}.parent)
           psize=sum(p(obj.g{i}.parent,:));
@@ -141,10 +141,10 @@ classdef Gates < handle
           psize=total;
         end
         nm=obj.g{i}.name;
-        if length(nm)>20
-          nm=['..',nm(end-17:end)];
+        if length(nm)>30
+          nm=['..',nm(end-27:end)];
         end
-        fprintf('%2d %20.20s %3d   %7d  %6.2f  %6.2f %s\n',i,nm,obj.g{i}.parent,sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.g{i}.desc());
+        fprintf('%2d %30.30s %3d   %7d  %6.2f  %6.2f %s\n',i,nm,obj.g{i}.parent,sum(p(i,:)),sum(p(i,:))/psize*100,sum(p(i,:))/total*100,obj.g{i}.desc());
       end
     end
 
