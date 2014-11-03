@@ -14,6 +14,10 @@ end
 
 for i=1:length(f)
   sel=f(i).P(f(i).usegatenum,:);
+  if sum(sel)==0
+    fprintf('No data falls in gate for %s (%s) with gate %s\n', ti, f(i).hdr.cells, f(i).gates.g{f(i).usegatenum}.name);
+    continue;
+  end
   %    sel=f(i).cherry>0 & f(i).gfp>0;
   gfpval=exp(mean(log(f(i).gfp(sel))));
   chval=exp(mean(log(f(i).cherry(sel))));
