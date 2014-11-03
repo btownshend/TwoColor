@@ -190,7 +190,10 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
 %        fcshdr.par(i).L = str2num(get_mnemonic_value(['$P',num2str(i),'L'],fcsheader_main, mnemonic_separator));
         fcshdr.par(i).O = get_mnemonic_value(['$P',num2str(i),'O'],fcsheader_main, mnemonic_separator);
         fcshdr.par(i).P = get_mnemonic_value(['$P',num2str(i),'P'],fcsheader_main, mnemonic_separator);
-        fcshdr.par(i).S = str2num(get_mnemonic_value(['$P',num2str(i),'S'],fcsheader_main, mnemonic_separator));
+        PS=get_mnemonic_value(['$P',num2str(i),'S'],fcsheader_main, mnemonic_separator);
+        if ~isempty(PS)
+          fcshdr.par(i).S = str2num(PS);
+        end
 %        fcshdr.par(i).T = str2num(get_mnemonic_value(['$P',num2str(i),'T'],fcsheader_main, mnemonic_separator));
         fcshdr.par(i).V = get_mnemonic_value(['$P',num2str(i),'V'],fcsheader_main, mnemonic_separator);
         fcshdr.par(i).calibration = get_mnemonic_value(['$P',num2str(i),'CALIBRATION'],fcsheader_main, mnemonic_separator);
