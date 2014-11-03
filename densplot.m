@@ -4,20 +4,31 @@
 %  x,y: data
 %  bins: bin edges to annotate on plot
 %  range: [minx, maxx, miny, maxy]  for plotting
-%  dolog: true to use log data
+%  dolog: true to use log data, if it is a 2-element vector, control log setting for x,y independently
 function [z,rng]=densplot(x,y,bins,range,dolog)
-if nargin<5
-  dolog=0;
+if nargin<5 || isempty(dolog)
+  dolog=[0,0];
 end
 if isempty(x)
   fprintf('densplot: Nothing to plot\n');
   return;
 end
-if dolog
-  if mean(x<=0 | y<=0)>0.01
-    fprintf('densplot: Ignoring %.1f%% of points that are <= 0\n',mean(x<=0 | y<=0)*100);
+if length(dolog)==1
+  dolog=[dolog,dolog];
+end
+if dolog(1)
+  if mean(x<=0)
+    fprintf('densplot: Ignoring %.1f%% of points that have x <= 0\n',mean(x<=0)*100);
   end
-  sel=x>0 & y>0;
+  sel=x>0;
+  x=x(sel);
+  y=y(sel);
+end
+if dolog(2)
+  if mean(y<=0)>0.01
+    fprintf('densplot: Ignoring %.1f%% of points that have y <= 0\n',mean(y<=0)*100);
+  end
+  sel=y>0;
   x=x(sel);
   y=y(sel);
 end
@@ -27,10 +38,13 @@ if nargin < 4 || length(range)==0
   range=[xs(floor(length(xs)*.005)+1),xs(floor(length(xs)*.995)+1),ys(floor(length(ys)*.005)+1),ys(floor(length(ys)*.995)+1)];
 end
 rng=range;  % Return value
-if dolog
-  x=log(x);
-  y=log(y);
-  range=log(range);
+if dolog(1)
+  x=log10(x);
+  range(1:2)=log10(range(1:2));
+end
+if dolog(2)
+  y=log10(y);
+  range(3:4)=log10(range(3:4));
 end
 if nargin<3 || length(bins)==0
   bins=max(100,round(sqrt(length(x)/5)))*[1,1];
@@ -49,12 +63,19 @@ end
 gx=(([0,1:bins(1)+2]-1)/bins(1))*(range(2)-range(1))+range(1);
 gy=(([0,1:bins(2)+2]-1)/bins(2))*(range(4)-range(3))+range(3);
 [mx,my]=meshgrid(gx,gy);
-if dolog
-  pcolor(exp(mx),exp(my),z);
-  set(gca,'YScale','log');
+if dolog(1)
+  mx=10.^mx;
+end
+if dolog(2)
+  my=10.^my;
+end
+pcolor(mx,my,z);
+if dolog(1)
   set(gca,'XScale','log');
-else
-  pcolor(mx,my,z);
+end
+if dolog(2)
+  set(gca,'YScale','log');
+end
 end
 caxis([0,max(max(z(2:end-2,2:end-2)))]);
 shading flat
