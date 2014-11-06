@@ -1,20 +1,20 @@
 % Dump gates from a BDFACS (aria) .xml configuration file
 % Save in a .m file that can be read to create gates using Gates module
-function GG=bdfacs_gates(infile)
+function results=bdfacs_gates(infile)
 if nargin<1
   error('Usage: bdfacs_gates(infile)');
 end
 %global x
 %if ~exist('x') || isempty(x)
-  x=xml2struct(infile);
-  %end
+x=xml2struct(infile);
+%end
 if ~isfield(x,'bdfacs')
+  fprintf('Make sure that it is the private copy of xml2struct that is on your path\n');
   if isfield(x,'Configuration')
     error('This appears to be an INFLUX file\n');
   end
   error('This does not seem to be a BDFACS file -- outer element, "bdfacs", missing\n');
 end
-GG=Gates;
 
 e=x.bdfacs.experiment;
 fprintf('Experiment: %s (%s)\n', e.Attributes.name, e.date.Text);
@@ -24,48 +24,22 @@ for iwt=1:length(aw.worksheet_template)
   wt=aw.worksheet_template{iwt};
   fprintf('  Worksheet Template: %s\n', wt.Attributes.name);
   if strcmp(wt.Attributes.name,'Analysis')
-    for ig=1:length(wt.gates.gate)
-      gate=wt.gates.gate{ig};
-      fprintf('   Gate: %s, Type: %s', gate.Attributes.fullname, gate.Attributes.type);
-      if isfield(gate,'parent')
-        fprintf(', Parent: %s',gate.parent.Text);
-      end
-      fprintf('\n');
-      if strcmp(gate.Attributes.type,'EventSource_Classifier')
-        GG.add(gate.Attributes.fullname,'1');
-      elseif strcmp(gate.Attributes.type,'Region_Classifier')
-        r=gate.region;
-        ra=r.Attributes;
-        fprintf('    Region: %s, type:%s',ra.name,ra.type);
-        if strcmp(ra.type,'POLYGON_REGION') || strcmp(ra.type,'RECTANGLE_REGION')
-          islog=[strcmp(gate.is_x_parameter_log.Text,'true'),strcmp(gate.is_y_parameter_log.Text,'true')];
-          fprintf(', x:%s(log:%d), y:%s(log:%d)\n      [', ra.xparm, islog(1), ra.yparm,islog(2));
-          xv=cellfun(@(z) str2num(z.Attributes.x), r.points.point);
-          yv=cellfun(@(z) str2num(z.Attributes.y), r.points.point);
-          for i=1:length(xv)
-            fprintf('(%f,%f) ',xv(i),yv(i));
-          end
-          fprintf(']\n');
-          GG.addpolygon(gate.Attributes.fullname,{fixname(ra.xparm),fixname(ra.yparm)},islog,[xv;yv]',gate.parent.Text);
-        elseif strcmp(ra.type,'INTERVAL_REGION')
-          islog=strcmp(gate.is_x_parameter_log.Text,'true');
-          xv=cellfun(@(z) str2num(z.Attributes.x), r.points.point);
-          fprintf(', x:%s (log:%d)\n      [%s]\n', ra.xparm,islog,sprintf('%f ',xv));
-          GG.addrange(gate.Attributes.fullname,fixname(ra.xparm),islog,xv',gate.parent.Text);
-        else
-          fprintf('(Unknown region type)\n');
-        end
-      elseif strcmp(gate.Attributes.type,'NOT_Classifier')
-        fprintf('     NOT: %s\n', gate.input.Text);
-        GG.addnot(gate.Attributes.fullname, gate.input.Text, gate.parent.Text);
-      else
-        fprintf('Unhandled gate type\n');
-        keyboard
-      end
-    end
+    results.template=makegates(wt.gates);
   end
 end
 
+% Load gates from specific tubes
+tubes=[];
+for i=1:length(e.specimen)
+  s=e.specimen{i};
+  for j=1:length(s.tube)
+    t=s.tube{j};
+    fprintf('Loading gates from specimen %s, tube %s\n', s.Attributes.name, t.Attributes.name);
+    g=makegates(t.gates);
+    tubes=[tubes,struct('filename',t.data_filename.Text,'gates',g.gates,'xml',g.xml)];
+  end
+end
+results.tubes=tubes;
 return;
 
 c=x.Configuration;
@@ -180,6 +154,7 @@ for gloc=1:length(dg)
   fclose(fd);
   fprintf('Saved gates to %s\n',outfname);
 end
+end
 
 % Adjust names of parameters
 function s=fixname(s)
@@ -205,4 +180,60 @@ elseif strcmp(s,'Pacific Blue-A')
   s='dapi';
 elseif strcmp(s,'PE-Texas Red-A')
   s='cherry';
+end
+end
+
+
+function result=makegates(xml)
+GG=Gates;
+g=xml.gate;
+if length(g)==1
+  g={g};
+end
+for ig=1:length(g)
+  gate=g{ig};
+  fprintf('   Gate: %s, Type: %s', gate.Attributes.fullname, gate.Attributes.type);
+  if isfield(gate,'parent')
+    fprintf(', Parent: %s',gate.parent.Text);
+  end
+  fprintf('\n');
+  if strcmp(gate.Attributes.type,'EventSource_Classifier')
+    GG.add(gate.Attributes.fullname,'1');
+  elseif strcmp(gate.Attributes.type,'Region_Classifier')
+    r=gate.region;
+    ra=r.Attributes;
+    fprintf('    Region: %s, type:%s',ra.name,ra.type);
+    if strcmp(ra.type,'POLYGON_REGION') || strcmp(ra.type,'RECTANGLE_REGION')
+      islog=[strcmp(gate.is_x_parameter_log.Text,'true'),strcmp(gate.is_y_parameter_log.Text,'true')];
+      isscaled=[strcmp(gate.is_x_parameter_scaled.Text,'true'),strcmp(gate.is_y_parameter_scaled.Text,'true')];
+      scale=[str2num(gate.x_parameter_scale_value.Text),str2num(gate.y_parameter_scale_value.Text)];
+      fprintf(', x:%s(log:%d), y:%s(log:%d)\n      [', ra.xparm, islog(1), ra.yparm,islog(2));
+      xv=cellfun(@(z) str2num(z.Attributes.x), r.points.point);
+      yv=cellfun(@(z) str2num(z.Attributes.y), r.points.point);
+      for i=1:length(xv)
+        fprintf('(%f,%f) ',xv(i),yv(i));
+      end
+      fprintf(']\n');
+      GG.addpolygon(gate.Attributes.fullname,{fixname(ra.xparm),fixname(ra.yparm)},islog,[xv;yv]',gate.parent.Text,'isscaled',isscaled,'scale',scale);
+    elseif strcmp(ra.type,'INTERVAL_REGION')
+      islog=strcmp(gate.is_x_parameter_log.Text,'true');
+      isscaled=strcmp(gate.is_x_parameter_scaled.Text,'true');
+      scale=str2num(gate.x_parameter_scale_value.Text);
+      xv=cellfun(@(z) str2num(z.Attributes.x), r.points.point);
+      fprintf(', x:%s (log:%d)\n      [%s]\n', ra.xparm,islog,sprintf('%f ',xv));
+      GG.addrange(gate.Attributes.fullname,fixname(ra.xparm),islog,xv',gate.parent.Text,'isscaled',isscaled,'scale',scale);
+    else
+      fprintf('(Unknown region type)\n');
+    end
+  elseif strcmp(gate.Attributes.type,'NOT_Classifier')
+    fprintf('     NOT: %s\n', gate.input.Text);
+    GG.addnot(gate.Attributes.fullname, gate.input.Text, gate.parent.Text);
+  elseif strcmp(gate.Attributes.type,'RestOf_Classifier')
+    fprintf('     Rest of: %s (ignored)\n', gate.input.Text);
+  else
+    fprintf('Unhandled gate type\n');
+    keyboard
+  end
+end
+result=struct('gates',GG','xml',xml);
 end
