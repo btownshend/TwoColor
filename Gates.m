@@ -25,10 +25,13 @@ classdef Gates < handle
       elseif ~isnumeric(parent)
         parent=obj.lookup(parent);
       end
-      obj.g{end+1}=Gate(name,parent,expr);
+      obj.g{end+1}=Gate(name,1,parent,'expr',expr);
     end
     
-    function addpolygon(obj,name,vnames,islog,polygon,parent) 
+    function addpolygon(obj,name,vnames,islog,polygon,parent,varargin) 
+      defaults=struct('isscaled',[0,0],'scale',[0,0]);
+      args=processargs(defaults,varargin);
+      
       assert(length(vnames)==2);
       assert(length(islog)==2);
       assert(size(polygon,2)==2);
@@ -38,10 +41,12 @@ classdef Gates < handle
       elseif ~isnumeric(parent)
         parent=obj.lookup(parent);
       end
-      obj.g{end+1}=Gate(name,parent,vnames,islog,polygon);
+      obj.g{end+1}=Gate(name,2,parent,'vars',vnames,'islog',islog,'polygon',polygon,'isscaled',args.isscaled,'scale',args.scale);
     end
     
-    function addrange(obj,name,vname,islog,range,parent) 
+    function addrange(obj,name,vname,islog,range,parent,varargin) 
+      defaults=struct('isscaled',0,'scale',0);
+      args=processargs(defaults,varargin);
       assert(length(islog)==1);
       assert(length(range)==2);
       if nargin<6
@@ -49,7 +54,7 @@ classdef Gates < handle
       elseif ~isnumeric(parent)
         parent=obj.lookup(parent);
       end
-      obj.g{end+1}=Gate(name,parent,{vname},islog,range);
+      obj.g{end+1}=Gate(name,3,parent,'vars',{vname},'islog',islog,'range',range,'isscaled',args.isscaled,'scale',args.scale);
     end
     
     function addnot(obj,name,vname,parent)
@@ -58,7 +63,7 @@ classdef Gates < handle
       elseif ~isnumeric(parent)
         parent=obj.lookup(parent);
       end
-      obj.g{end+1}=Gate(name,parent,{vname},[],[],1);
+      obj.g{end+1}=Gate(name,4,parent,'vars',{vname});
     end
     
     function num=lookup(obj,name)
@@ -93,7 +98,11 @@ classdef Gates < handle
         v=[];
         for i=1:length(obj.g{gnum}.vars)
           v(:,i)=x.(obj.g{gnum}.vars{i});
-          if obj.g{gnum}.islog(i);
+          if obj.g{gnum}.isscaled(i)
+            fprintf('Variable %s is scaled -- gates.apply handling of this is untested\n',obj.g{gnum}.vars{i});
+            l=Logicle(obj.g{gnum}.scale(i));
+            v(:,i)=l.map(v(:,i));
+          elseif obj.g{gnum}.islog(i);
             fracneg=mean(v(:,i)<0);
             if fracneg>0.01
               fprintf('Gates.apply: Warning, ignoring %.1f%% of events that have negative values for %s\n', fracneg*100, obj.g{gnum}.vars{i});
@@ -108,11 +117,22 @@ classdef Gates < handle
         sel=sel&inpolygon(v(:,1),v(:,2),obj.g{gnum}.polygon(:,1),obj.g{gnum}.polygon(:,2));
       elseif obj.g{gnum}.gatetype==3 % Range gate
         v=x.(obj.g{gnum}.vars{1});
-        if obj.g{gnum}.islog
+        if obj.g{gnum}.isscaled
+          fprintf('Variable %s is scaled -- gates.apply handling of this is untested\n',obj.g{gnum}.vars{i});
+          l=Logicle(obj.g{gnum}.scale);
+          v=l.map(v);
+          sel=sel&v>=obj.g{gnum}.range(1)&v<=obj.g{gnum}.range(2);
+        elseif obj.g{gnum}.islog
           sel=sel&v>=10.^obj.g{gnum}.range(1)&v<=10.^obj.g{gnum}.range(2);
         else
           sel=sel&v>=obj.g{gnum}.range(1)&v<=obj.g{gnum}.range(2);
         end
+      elseif obj.g{gnum}.gatetype==4 % NOT gate
+        ngate=obj.g{gnum}.vars{1};
+        % Apply the referenced gate
+        nsel=obj.apply(x,ngate);
+        % And invert
+        sel=sel&~nsel;
       end
     end
 
@@ -187,20 +207,20 @@ classdef Gates < handle
           range(2)=max(range(2),grange(2));
           range(3)=min(range(3),grange(3));
           range(4)=max(range(4),grange(4));
-          [~,range]=densplot(x.(v1),x.(v2),[],range,[v1log,v2log]);
+          [~,range]=densplot(x.(v1),x.(v2),[],range,[v1log,v2log],gate.isscaled,gate.scale);
           xlabel(v1);
           ylabel(v2);
           title('All events');
           gate.drawgate();
           subplot(212);
         end
-        [~,range]=densplot(x.(v1)(psel),x.(v2)(psel),[],range,[v1log,v2log]);
+        [~,range]=densplot(x.(v1)(psel),x.(v2)(psel),[],range,[v1log,v2log],gate.isscaled,gate.scale);
         % Adjust range to include gate
         range(1)=min(range(1),grange(1));
         range(2)=max(range(2),grange(2));
         range(3)=min(range(3),grange(3));
         range(4)=max(range(4),grange(4));
-        densplot(x.(v1)(psel),x.(v2)(psel),[],range,[v1log,v2log]);
+        densplot(x.(v1)(psel),x.(v2)(psel),[],range,[v1log,v2log],gate.isscaled,gate.scale);
         xlabel(v1);
         ylabel(v2);
         title('Included in parent gate');

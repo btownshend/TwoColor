@@ -5,16 +5,27 @@
 %  bins: bin edges to annotate on plot
 %  range: [minx, maxx, miny, maxy]  for plotting
 %  dolog: true to use log data, if it is a 2-element vector, control log setting for x,y independently
-function [z,rng]=densplot(x,y,bins,range,dolog)
+function [z,rng]=densplot(x,y,bins,range,dolog,dologicle,scaling)
 if nargin<5 || isempty(dolog)
   dolog=[0,0];
 end
+if nargin<6 || isempty(dologicle)
+  dologicle=[0,0];
+end
+
 if isempty(x)
   fprintf('densplot: Nothing to plot\n');
   return;
 end
 if length(dolog)==1
   dolog=[dolog,dolog];
+end
+if length(dologicle)==1
+  dologicle=[dologicle,dologicle];
+end
+if any(dolog&dologicle)
+  fprintf('densplot: Both log and logicle specified for the same axis - using logicle');
+  dolog=dolog&~dologicle;
 end
 if dolog(1)
   if mean(x<=0)
@@ -45,6 +56,24 @@ end
 if dolog(2)
   y=log10(y);
   range(3:4)=log10(range(3:4));
+end
+if dologicle(1)
+  if nargin<7
+    lx=Logicle(prctile(x(x<0),5));   % From Park et al paper
+  else
+    lx=Logicle(scaling(1));
+  end
+  x=lx.map(x);
+  range(1:2)=[0,lx.M];
+end
+if dologicle(2)
+  if nargin<7
+    ly=Logicle(prctile(y(y<0),5));   % From Park et al paper
+  else
+    ly=Logicle(scaling(2));
+  end
+  y=ly.map(y);
+  range(3:4)=[0,ly.M];
 end
 if nargin<3 || length(bins)==0
   bins=max(100,round(sqrt(length(x)/5)))*[1,1];
@@ -79,9 +108,39 @@ end
 if dolog(1)||dolog(2)
   logticks(dolog(1),dolog(2));
 end
-caxis([0,max(max(z(2:end-2,2:end-2)))]);
+% Setup logicle ticks
+if dologicle(1)
+  tickval=sort(unique([ceil(lx.r),0,100,1000,1e4,1e5,lx.T]));
+  tickpos=lx.map(tickval);
+  c=axis;
+  sel=tickpos>=c(1) & tickpos<=c(2);
+  tickpos=tickpos(sel); tickval=tickval(sel);
+  set(gca,'XTick',tickpos);
+  set(gca,'XTickLabel',num2cell(tickval));
+end
+if dologicle(2)
+  tickval=sort(unique([ceil(ly.r),0,100,1000,1e4,1e5,ly.T]));
+  tickpos=ly.map(tickval);
+  c=axis;
+  sel=tickpos>=c(3) & tickpos<=c(4);
+  tickpos=tickpos(sel); tickval=tickval(sel);
+  set(gca,'YTick',tickpos);
+  set(gca,'YTickLabel',num2cell(tickval));
+end
+
+allz=z(2:end-2,2:end-2);
+maxcnt=prctile(allz(:),99.5);
+caxis([0,maxcnt]);
 shading flat
 colorbar
+colormap('jet');
+cmap=get(gcf,'Colormap');
+if size(cmap,1)>1
+  cmap=interp1(1:size(cmap,1),cmap,1:size(cmap,1)/maxcnt:size(cmap,1));  % Upsample cmap to have an entry for each count
+  cmap(1,:)=0;  % Make 0 counts black
+  set(gcf,'Colormap',cmap);
+end
+
 
 
 
