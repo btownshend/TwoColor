@@ -185,18 +185,20 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
         fcshdr.par(i).name = get_mnemonic_value(['$P',num2str(i),'N'],fcsheader_main, mnemonic_separator);
         fcshdr.par(i).range = str2num(get_mnemonic_value(['$P',num2str(i),'R'],fcsheader_main, mnemonic_separator));
         fcshdr.par(i).bit = str2num(get_mnemonic_value(['$P',num2str(i),'B'],fcsheader_main, mnemonic_separator));
-%        fcshdr.par(i).F = str2num(get_mnemonic_value(['$P',num2str(i),'F'],fcsheader_main, mnemonic_separator));
-        fcshdr.par(i).G = str2num(get_mnemonic_value(['$P',num2str(i),'G'],fcsheader_main, mnemonic_separator));
-%        fcshdr.par(i).L = str2num(get_mnemonic_value(['$P',num2str(i),'L'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).D = get_mnemonic_value(['$P',num2str(i),'D'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).E = get_mnemonic_value(['$P',num2str(i),'E'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).F = optstr2num(get_mnemonic_value(['$P',num2str(i),'F'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).G = optstr2num(get_mnemonic_value(['$P',num2str(i),'G'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).L = optstr2num(get_mnemonic_value(['$P',num2str(i),'L'],fcsheader_main, mnemonic_separator));
         fcshdr.par(i).O = get_mnemonic_value(['$P',num2str(i),'O'],fcsheader_main, mnemonic_separator);
         fcshdr.par(i).P = get_mnemonic_value(['$P',num2str(i),'P'],fcsheader_main, mnemonic_separator);
-        PS=get_mnemonic_value(['$P',num2str(i),'S'],fcsheader_main, mnemonic_separator);
-        if ~isempty(PS)
-          fcshdr.par(i).S = str2num(PS);
-        end
-%        fcshdr.par(i).T = str2num(get_mnemonic_value(['$P',num2str(i),'T'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).S = get_mnemonic_value(['$P',num2str(i),'S'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).T = optstr2num(get_mnemonic_value(['$P',num2str(i),'T'],fcsheader_main, mnemonic_separator));
         fcshdr.par(i).V = get_mnemonic_value(['$P',num2str(i),'V'],fcsheader_main, mnemonic_separator);
         fcshdr.par(i).calibration = get_mnemonic_value(['$P',num2str(i),'CALIBRATION'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).BS = get_mnemonic_value(['P',num2str(i),'BS'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).MS = get_mnemonic_value(['P',num2str(i),'MS'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).display = get_mnemonic_value(['P',num2str(i),'DISPLAY'],fcsheader_main, mnemonic_separator);
 
         %==============   Changed way that amplification type is treated ---  ARM  ==================
         par_exponent_str= (get_mnemonic_value(['$P',num2str(i),'E'],fcsheader_main, mnemonic_separator));
@@ -247,18 +249,22 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
     fcshdr.system = get_mnemonic_value('$SYS',fcsheader_main, mnemonic_separator);
     fcshdr.project = get_mnemonic_value('$PROJ',fcsheader_main, mnemonic_separator);
     fcshdr.experiment = get_mnemonic_value('$EXP',fcsheader_main, mnemonic_separator);
+
+    fcshdr.abrt = get_mnemonic_value('$ABRT',fcsheader_main, mnemonic_separator);
     fcshdr.cells = get_mnemonic_value('$CELLS',fcsheader_main, mnemonic_separator);
     fcshdr.creator = get_mnemonic_value('CREATOR',fcsheader_main, mnemonic_separator);
     fcshdr.comment = get_mnemonic_value('$COM',fcsheader_main, mnemonic_separator);
     fcshdr.csmode = get_mnemonic_value('$CSMODE',fcsheader_main, mnemonic_separator);
     fcshdr.csvbits = get_mnemonic_value('$CSVBITS',fcsheader_main, mnemonic_separator);
     fcshdr.cytsn = get_mnemonic_value('$CYTSN',fcsheader_main, mnemonic_separator);
-    fcshdr.abrt = get_mnemonic_value('$ABRT',fcsheader_main, mnemonic_separator);
     fcshdr.fil = get_mnemonic_value('$FIL',fcsheader_main, mnemonic_separator);
     fcshdr.gate = get_mnemonic_value('$GATE',fcsheader_main, mnemonic_separator);
     fcshdr.gating = get_mnemonic_value('$GATING',fcsheader_main, mnemonic_separator);
     fcshdr.inst = get_mnemonic_value('$INST',fcsheader_main, mnemonic_separator);
+    fcshdr.lastmodified = get_mnemonic_value('$LAST_MODIFIED',fcsheader_main, mnemonic_separator);
+    fcshdr.lastmodifier = get_mnemonic_value('$LAST_MODIFIER',fcsheader_main, mnemonic_separator);
     fcshdr.lost = get_mnemonic_value('$LOST',fcsheader_main, mnemonic_separator);
+    fcshdr.mode = get_mnemonic_value('$MODE',fcsheader_main, mnemonic_separator);
     fcshdr.op = get_mnemonic_value('$OP',fcsheader_main, mnemonic_separator);
     fcshdr.originality = get_mnemonic_value('$ORIGINALITY',fcsheader_main, mnemonic_separator);
     fcshdr.plateid = get_mnemonic_value('$PLATEID',fcsheader_main, mnemonic_separator);
@@ -268,12 +274,29 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') % FCS
     fcshdr.src = get_mnemonic_value('$SRC',fcsheader_main, mnemonic_separator);
     fcshdr.sys = get_mnemonic_value('$SYS',fcsheader_main, mnemonic_separator);
     fcshdr.timestep = get_mnemonic_value('$TIMESTEP',fcsheader_main, mnemonic_separator);
+    fcshdr.tot = optstr2num(get_mnemonic_value('$TOT',fcsheader_main, mnemonic_separator));
     fcshdr.tr = get_mnemonic_value('$TR',fcsheader_main, mnemonic_separator);
     fcshdr.vol = get_mnemonic_value('$VOL',fcsheader_main, mnemonic_separator);
     fcshdr.wellid = get_mnemonic_value('$WELLID',fcsheader_main, mnemonic_separator);
     fcshdr.tube = get_mnemonic_value('TUBE NAME',fcsheader_main, mnemonic_separator);
     fcshdr.expt = get_mnemonic_value('EXPERIMENT NAME',fcsheader_main, mnemonic_separator);
-        
+    fcshdr.exporttime = get_mnemonic_value('EXPORT TIME',fcsheader_main, mnemonic_separator);
+    fcshdr.exportuser = get_mnemonic_value('EXPORT USER NAME',fcsheader_main, mnemonic_separator);
+    fcshdr.fscasf = get_mnemonic_value('FSC ASF',fcsheader_main, mnemonic_separator);
+    fcshdr.guid = get_mnemonic_value('GUID',fcsheader_main, mnemonic_separator);
+    fcshdr.applycomp = get_mnemonic_value('APPLY COMPENSATION',fcsheader_main, mnemonic_separator);
+    fcshdr.autobs = get_mnemonic_value('AUTO BS',fcsheader_main, mnemonic_separator);
+    fcshdr.specimen = get_mnemonic_value('SPECIMEN NAME',fcsheader_main, mnemonic_separator);
+    fcshdr.threshold = get_mnemonic_value('THRESHOLD',fcsheader_main, mnemonic_separator);
+    for i=1:10
+      nm=get_mnemonic_value(['LASER',num2str(i),'NAME'],fcsheader_main, mnemonic_separator);
+      if isempty(nm)
+        break;
+      end
+      fschdr.laser(i).name=nm;
+      fschdr.laser(i).asf=optstr2num(get_mnemonic_value(['LASER',num2str(i),'ASF'],fcsheader_main, mnemonic_separator));
+      fschdr.laser(i).delay=optstr2num(get_mnemonic_value(['LASER',num2str(i),'DELAY'],fcsheader_main, mnemonic_separator));
+    end
 else
     hm = msgbox([FileName,': The file can not be read (Unsupported FCS type)'],'FcAnalysis info','warn');
     fcsdat = []; fcshdr = []; fcsdatscaled= []; fcsdat_comp= [];
@@ -479,4 +502,11 @@ elseif strcmp(mnemonic_separator, 'LF') % William Peria, 16/05/2014
     mneval = char(fcsheader(mnemonic_stoppos + 1 : next_linefeed-1)');
 else
   error('Unsupported separator: char(%d)',mnemonic_separator);
+end
+
+function n=optstr2num(s)
+if isempty(s)
+  n=s;
+else
+  n=str2num(s);
 end
