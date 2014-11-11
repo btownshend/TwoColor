@@ -135,11 +135,14 @@ shading flat
 colorbar
 colormap('jet');
 cmap=get(gcf,'Colormap');
-if size(cmap,1)>1
-  cmap=interp1(1:size(cmap,1),cmap,1:size(cmap,1)/maxcnt:size(cmap,1));  % Upsample cmap to have an entry for each count
+cmapsize=max(round(maxcnt),100);
+if size(cmap,1)~=cmapsize
+  %  fprintf('Resetting color map to contain %d entries instead of %d\n', cmapsize,size(cmap,1));
+  cmap=jet(cmapsize);
   cmap(1,:)=0;  % Make 0 counts black
   set(gcf,'Colormap',cmap);
 end
+
 
 
 
