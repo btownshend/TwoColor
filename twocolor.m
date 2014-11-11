@@ -16,7 +16,8 @@ function f=twocolor(fnames,gates,varargin)
   defaults=struct('usegate','',...
                   'ratiorange',[1e-2,20],...
                   'maxevents',1000000,...
-                  'comp',[],...
+                  'comp',[],...,
+  		  'basename',{{}},...,
                   'desc',{{}});
   args=processargs(defaults,varargin);
   if isempty(args.usegate)
@@ -48,6 +49,9 @@ function f=twocolor(fnames,gates,varargin)
         f(i).data=f(i).data(1:args.maxevents,:);
       end
       f(i).fname=fnames{i};
+      if ~isempty(args.basename)
+        f(i).basename=args.basename{i};
+      end
       if ~isempty(args.desc)
         f(i).hdr.cells=args.desc{i};
       elseif isempty(f(i).hdr.cells) 
