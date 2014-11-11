@@ -5,7 +5,8 @@ function f=calcmu(f,varargin)
 defaults=struct('doplot',false,...
                 'nonlinear',false,...
                 'offset',0,...
-                'refcherry',15000);
+                'refcherry',15000,...
+		'debug',false);
 args=processargs(defaults,varargin);
 
 % Calculate tightened ratio
@@ -15,7 +16,9 @@ ratio=f.gfp./f.cherry;
 stdmu=median(ratio(sel));
 predict=f.cherry*stdmu;
 predstd=sqrt(mean((log(predict(sel))-log(f.gfp(sel))).^2));
-fprintf('Standard mu = %.3f [%.3f,%.3f] predstd=%.3f\n', stdmu, prctile(ratio(sel),10),prctile(ratio(sel),90),predstd);
+if args.debug
+  fprintf('Standard mu = %.3f [%.3f,%.3f] predstd=%.3f\n', stdmu, prctile(ratio(sel),10),prctile(ratio(sel),90),predstd);
+end
 
 if isempty(args.offset)
   % Remove any offset in the GFP signal to make the raw data closer to a ratio
@@ -30,7 +33,9 @@ ratio=max(0,gfp./f.cherry);
 mu=median(ratio(sel));
 predict=f.cherry*mu+args.offset;
 predstd=sqrt(mean((log(predict(sel))-log(f.gfp(sel))).^2));
-fprintf('Offset %.0f,  mu = %.3f [%.3f,%.3f] predstd=%.3f\n', args.offset, mu, prctile(ratio(sel),10),prctile(ratio(sel),90),predstd);
+if args.debug
+  fprintf('Offset %.0f,  mu = %.3f [%.3f,%.3f] predstd=%.3f\n', args.offset, mu, prctile(ratio(sel),10),prctile(ratio(sel),90),predstd);
+end
 
 
 % Calculate non-linear compensation
@@ -49,7 +54,9 @@ if args.nonlinear
   plot(ax(1:2),exp(polyval(pf,log(ax(1:2)))),':r');
   predict=((f.cherry/args.refcherry).^pf(1)*args.refcherry)*mu+args.offset;
   predstd=sqrt(mean((log(predict(sel))-log(f.gfp(sel))).^2));
-  fprintf('Corrected mu = %.3f [%.3f,%.3f] predstd=%.3f (exp=%.2f)\n', mu, prctile(compratio(sel),10),prctile(compratio(sel),90),predstd,pf(1));
+  if args.debug
+    fprintf('Corrected mu = %.3f [%.3f,%.3f] predstd=%.3f (exp=%.2f)\n', mu, prctile(compratio(sel),10),prctile(compratio(sel),90),predstd,pf(1));
+  end
 end
 
 
