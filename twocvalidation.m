@@ -79,9 +79,8 @@ function result=twocvalidation(varargin)
   % Composite analysis
   summary=[];
   for i=1:length(basenames)
-    s=struct('basename',basenames{i},'minus',[],'minusci',{{}},'plus',[],'plusci',{{}},'target','','sample',{{}},'indices',[]);
+    s=struct('basename',basenames{i},'ratio',[],'ci',[],'indices',[],'conds',{{''}},'sample',{{}});
     fsel=find(strcmp({layout.basename},basenames{i}));
-    s.indices=fsel;
     for j=1:length(fsel)
       if ~isempty(layout(fsel(j)).ignore)
         fprintf('Skipping %s since it is marked as bad (note: %s)\n', layout(fsel(j)).desc, layout(fsel(j)).note);
@@ -97,36 +96,22 @@ function result=twocvalidation(varargin)
       if isempty(loc)
         s.sample{end+1}=sample;
         loc=length(s.sample);
-        s.minus(loc)=nan;
-        s.plus(loc)=nan;
+        s.ratio(:,loc)=nan;
+        s.indices(:,loc)=nan;
+        s.ci(:,loc,:)=nan;
       end
-      target=layout(fsel(j)).cond;
-      if ~isempty(target)
-        if ~isempty(s.target) && ~strcmp(s.target,target)
-          fprintf('%s has multiple targets: %s and %s\n', sample, s.target, target);
-          continue;
-        end
-        s.target=target;
+      cond=find(strcmp(layout(fsel(j)).cond,s.conds),1);
+      if isempty(cond) 
+        s.conds{end+1}=layout(fsel(j)).cond;
+        s.ratio(end+1,:)=nan;
+        s.indices(end+1,:)=nan;
+        s.ci(end+1,:,:)=nan;
+        cond=length(s.conds);
       end
-      if isempty(s.target)
-        if ~isnan(s.minus(loc))
-          fprintf('Warning: Multiple entries for %s -target\n', sample);
-          s.sample{end+1}=sample;
-          loc=length(s.sample);
-          s.plus(loc)=nan;
-        end
-        s.minus(loc)=f(fsel(j)).mu;
-        s.minusci{loc}=f(fsel(j)).muci80;
-      else
-        if ~isnan(s.plus(loc))
-          fprintf('Warning: Multiple entries for %s +target\n', sample);
-          s.sample{end+1}=sample;
-          loc=length(s.sample);
-          s.minus(loc)=nan;
-        end
-        s.plus(loc)=f(fsel(j)).mu;
-        s.plusci{loc}=f(fsel(j)).muci80;
-      end
+      
+      s.indices(cond,loc)=fsel(j);
+      s.ratio(cond,loc)=f(fsel(j)).mu;
+      s.ci(cond,loc,1:2)=f(fsel(j)).muci80;
     end
     summary=[summary,s];
   end
