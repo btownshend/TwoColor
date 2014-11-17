@@ -11,11 +11,13 @@
 classdef Gates < handle
   properties
     g;   % Cell array of gates
+    hasbeenwarned;
   end
   
   methods
     function obj=Gates
       obj.g={};
+      obj.hasbeenwarned=false;
     end
     
     function add(obj,name,expr,parent)
@@ -75,11 +77,15 @@ classdef Gates < handle
       error('Unable to find gate "%s"\n', name);
     end
     
-    function sel=apply(obj,x,name)
+    function sel=apply(obj,x,name,parents,nowarn)
     % Apply a gate
+      if nargin<5
+        nowarn=false;
+      end
+      gscale=822;  % Unsure if this s correct -- just a rough estimate (TODO: Check Aria)
       if isempty(name)
         % No gate
-        sel=true(size(x.data,1),1);
+        sel=true(size(x.gfp,1),1);
         return;
       elseif isnumeric(name)
         gnum=name;
@@ -88,23 +94,32 @@ classdef Gates < handle
       end
       
       if isfinite(obj.g{gnum}.parent)
-        sel=obj.apply(x,obj.g{gnum}.parent);
+        if nargin>=4 && ~isempty(parents)
+          sel=parents(obj.g{gnum}.parent,:)';
+        else
+          sel=obj.apply(x,obj.g{gnum}.parent,[],nowarn);
+        end
       else
-        sel=true(size(x.data,1),1);
+        sel=true(size(x.gfp,1),1);
       end
       if obj.g{gnum}.gatetype==1   % Expr gate
         sel=sel&eval(obj.g{gnum}.expr);
       elseif obj.g{gnum}.gatetype==2  % Polygon gate
         v=[];
+        poly=obj.g{gnum}.polygon;
         for i=1:length(obj.g{gnum}.vars)
           v(:,i)=x.(obj.g{gnum}.vars{i});
           if obj.g{gnum}.isscaled(i)
-            fprintf('Variable %s is scaled -- gates.apply handling of this is untested\n',obj.g{gnum}.vars{i});
-            l=Logicle(obj.g{gnum}.scale(i));
+            if ~obj.hasbeenwarned
+              fprintf('Polygon gate has variable %s scaled -- gates.apply handling of this is untested\n',obj.g{gnum}.vars{i});
+              obj.hasbeenwarned=true;
+            end
+            l=obj.g{gnum}.getLogicle(i);
             v(:,i)=l.map(v(:,i));
+            poly=poly/gscale;
           elseif obj.g{gnum}.islog(i);
             fracneg=mean(v(:,i)<0);
-            if fracneg>0.01
+            if fracneg>0.01 && ~nowarn
               fprintf('Gates.apply: Warning, ignoring %.1f%% of events that have negative values for %s\n', fracneg*100, obj.g{gnum}.vars{i});
             end
             v(v(:,i)>0,i)=log10(v(v(:,i)>0,i));
@@ -114,14 +129,21 @@ classdef Gates < handle
         % if strcmp(obj.g{gnum}.vars{2},'fscw')
         %   keyboard;
         % end
-        sel=sel&inpolygon(v(:,1),v(:,2),obj.g{gnum}.polygon(:,1),obj.g{gnum}.polygon(:,2));
+        inp=inpolygon(v(:,1),v(:,2),poly(:,1),poly(:,2));
+        if (size(inp,1)~=1) ~= (size(sel,1)~=1)
+          inp=inp';
+        end
+        sel=sel&inp;
       elseif obj.g{gnum}.gatetype==3 % Range gate
         v=x.(obj.g{gnum}.vars{1});
         if obj.g{gnum}.isscaled
-          fprintf('Variable %s is scaled -- gates.apply handling of this is untested\n',obj.g{gnum}.vars{i});
-          l=Logicle(obj.g{gnum}.scale);
+          if ~obj.hasbeenwarned
+            fprintf('Range gate on %s is scaled -- gates.apply handling of this is untested\n',obj.g{gnum}.vars{1});
+              obj.hasbeenwarned=true;
+          end
+          l=obj.g{gnum}.getLogicle(1);
           v=l.map(v);
-          sel=sel&v>=obj.g{gnum}.range(1)&v<=obj.g{gnum}.range(2);
+          sel=sel&v>=(obj.g{gnum}.range(1)/gscale)&v<=(obj.g{gnum}.range(2)/gscale);
         elseif obj.g{gnum}.islog
           sel=sel&v>=10.^obj.g{gnum}.range(1)&v<=10.^obj.g{gnum}.range(2);
         else
@@ -130,16 +152,20 @@ classdef Gates < handle
       elseif obj.g{gnum}.gatetype==4 % NOT gate
         ngate=obj.g{gnum}.vars{1};
         % Apply the referenced gate
-        nsel=obj.apply(x,ngate);
+        if nargin>=4 && ~isempty(parents)
+          nsel=parents(obj.lookup(ngate),:)';
+        else
+          nsel=obj.apply(x,ngate,[],nowarn);
+        end
         % And invert
         sel=sel&~nsel;
       end
     end
 
     function p=applyall(obj,x)
-      p=false(length(obj.g),size(x.data,1));
+      p=false(length(obj.g),size(x.gfp,1));
       for i=1:length(obj.g);
-        p(i,:)=obj.apply(x,i);
+        p(i,:)=obj.apply(x,i,p(1:i-1,:));
       end
     end
     
@@ -185,7 +211,7 @@ classdef Gates < handle
       if isfinite(parent)
         psel=obj.apply(x,parent);
       else
-        psel=true(size(x.data,1),1);
+        psel=true(size(x.gfp,1),1);
       end
       sel=obj.apply(x,gnum);
       if ~isempty(figname)
@@ -236,21 +262,34 @@ classdef Gates < handle
         % if v2log
         %   set(gca,'YScale','log');
         % end
-      else % Range gate
+      elseif gate.gatetype==3 % Range gate
         v1=gate.vars{1};
         if dosubplots
           subplot(211);
-          pdfplot(x.(v1),[],gate.islog);
+          if gate.isscaled
+            l=gate.getLogicle(1);
+            v=l.map(x.(v1));
+            pdfplot(v);
+          else
+            pdfplot(x.(v1),[],gate.islog);
+          end
           xlabel(v1);
           title('All events');
           gate.drawgate();
-
           subplot(212);
         end
-        pdfplot(x.(v1)(psel),[],gate.islog);
+        if gate.isscaled
+          l=gate.getLogicle(1)
+          v=l.map(x.(v1));
+          pdfplot(v(psel));
+        else
+          pdfplot(x.(v1)(psel),[],gate.islog);
+        end
         xlabel(v1);
         title('Included in parent gate');
         gate.drawgate();
+      else
+        fprintf('Gates.plot: Unhandled gate type: %d\n', gate.gatetype);
       end
       h=suptitle(sprintf('Gate %s applied to %s', name, x.hdr.cells));
       set(h,'Interpreter','none');

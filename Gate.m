@@ -9,6 +9,7 @@ classdef Gate < handle;
     islog;   % (2) Whether to take log10 of v{1},v{2} before applying polygon
     isscaled;  % (2) Whether data is logicle scaled (takes precedence over islog)
     scale; %  (2) Scale if logicle scaled
+    logicle;   % Logicle map
     polygon;  % (:,2) Polygon coords
     range;    % (2) Range of values [low,high]
   end
@@ -28,6 +29,7 @@ classdef Gate < handle;
         obj.isscaled=args.isscaled;
         obj.scale=args.scale;
       end
+      obj.logicle={[],[]};
       if isempty(args.islog)
         obj.islog=false(1,length(args.vars));
       else
@@ -76,8 +78,16 @@ classdef Gate < handle;
     end
     
 
-    function drawgate(obj) 
+    function drawgate(obj,popts) 
     % Draw gate onto current plot
+    % TODO: this needs work:  currently "dumb" about whether axes are the same as the gate parameters and what the plotting scale is
+      if nargin<2
+        popts='r';
+        if obj.gatetype==3
+          popts=[popts,':'];
+        end
+      end
+      gscale=822;  % Unsure if this s correct -- just a rough estimate (TODO: Check Aria)
       if obj.gatetype==1
         fprintf('Unable to draw "expr" gates\n');
       elseif obj.gatetype==2
@@ -87,27 +97,34 @@ classdef Gate < handle;
             % Don't need to map since the plot will have been drawn in logicle coords already
             %l=Logicle(obj.scale(i));
             %v(:,i)=l.unmap(obj.polygon(:,i));
-            v(:,i)=obj.polygon(:,i);
+            v(:,i)=obj.polygon(:,i)/gscale;
           elseif obj.islog(i)
             v(:,i)=10.^obj.polygon(:,i);
           else
             v(:,i)=obj.polygon(:,i);
           end
         end
-        plot(v([1:end,1],1),v([1:end,1],2),'r');
+        plot(v([1:end,1],1),v([1:end,1],2),popts);
       elseif obj.gatetype==3
         c=axis;
         hold on;
         r=obj.range;
         if obj.isscaled
-          % Don't need to map since the plot will have been drawn in logicle coords already
-          % l=Logicle(obj.scale);
-          %r=l.unmap(r);
+          % We need to map the points to real values and then, if the plot is logicle, map back to plot coordinates
+          % TODO: map points if the plot is logicle
+          l=Logicle(obj.scale);
+          r=l.unmap(r/gscale);
         elseif obj.islog
           r=10.^r;
         end
-        plot([r(1),r(1)],c(3:4),'r:');
-        plot([r(2),r(2)],c(3:4),'r:');
+        % UGLY hack, assume y-axis if gate is on gfp
+        if strcmp(obj.vars{1},'gfp')
+          plot(c(1:2),[r(1),r(1)],popts);
+          plot(c(1:1),[r(2),r(2)],popts);
+        else
+          plot([r(1),r(1)],c(3:4),popts);
+          plot([r(2),r(2)],c(3:4),popts);
+        end
       elseif obj.gattetype==4
         fprintf('Ignoring draw of NOT gate\n');
       else
@@ -137,6 +154,15 @@ classdef Gate < handle;
         error('Gate.getrange does not support gate type %d\n', obj.gatetype);
       end
     end
+    
+    function l=getLogicle(obj,i)
+      if ~obj.isscaled(i)
+        error('Gate.getLogicle called for object that is not scaled\n');
+      end
+      if isempty(obj.logicle{i})
+        obj.logicle{i}=Logicle(obj.scale(i));
+      end
+      l=obj.logicle{i};
+    end
   end
 end
-
