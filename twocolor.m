@@ -43,7 +43,7 @@ function f=twocolor(fnames,gates,varargin)
       end
       fprintf('Loading %s...',fnames{i});
       [unscdata,f(i).hdr,f(i).data]=fca_readfcs(fnames{i});
-      fprintf('read %d events\n', size(f(i).data,1));
+      fprintf('read %d events (%s)\n', size(f(i).data,1),f(i).hdr.cells);
       if size(f(i).data,1)>args.maxevents
         fprintf('Only keeping %d/%d events\n', args.maxevents,size(f(i).data,1));
         f(i).data=f(i).data(1:args.maxevents,:);

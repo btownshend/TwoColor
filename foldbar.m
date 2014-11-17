@@ -12,6 +12,16 @@ end
 % moving any annotations
 delete(findall(gcf,'Type','doubleendarrowshape'))
 delete(findall(gcf,'Type','textboxshape'))
+if length(minus)==1
+  % Avoid making it an ungrouped bar plot
+  labels{end+1}='Dummy';
+  minus(end+1)=nan;
+  plus(end+1)=nan;
+  if ~isempty(args.ciminus)
+    args.ciminus(end+1,:)=nan;
+    args.ciplus(end+1,:)=nan;
+  end
+end
 all=[minus(:);plus(:)];
 bar([minus(:),plus(:)]);
 set(gca,'YScale','log');
@@ -63,4 +73,5 @@ gcapos=get(gca,'Position');
 ax=axis;
 c(1)=(p(1)-ax(1))/(ax(2)-ax(1))*gcapos(3)+gcapos(1);
 c(2)=(log(p(2))-log(ax(3)))/(log(ax(4))-log(ax(3)))*gcapos(4)+gcapos(2);
+c=real(c);
 %fprintf('p=(%f,%f), c=(%f,%f)\n', p,c);

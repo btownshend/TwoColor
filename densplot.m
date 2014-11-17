@@ -2,7 +2,7 @@
 % Brent Townshend 10/2012
 % Usage: densplot(x,y,bins,range,dolog)
 %  x,y: data
-%  bins: bin edges to annotate on plot
+%  bins: [bx,by] number of bins in each direction
 %  range: [minx, maxx, miny, maxy]  for plotting
 %  dolog: true to use log data, if it is a 2-element vector, control log setting for x,y independently
 function [z,rng]=densplot(x,y,bins,range,dolog,dologicle,scaling)
@@ -23,6 +23,9 @@ end
 if length(dologicle)==1
   dologicle=[dologicle,dologicle];
 end
+x=x(:);y=y(:);
+sel=isfinite(x)&isfinite(y);
+
 if any(dolog&dologicle)
   fprintf('densplot: Both log and logicle specified for the same axis - using logicle');
   dolog=dolog&~dologicle;
@@ -31,18 +34,19 @@ if dolog(1)
   if mean(x<=0)
     fprintf('densplot: Ignoring %.1f%% of points that have x <= 0\n',mean(x<=0)*100);
   end
-  sel=x>0;
-  x=x(sel);
-  y=y(sel);
+  sel=sel & x>0;
 end
+
 if dolog(2)
   if mean(y<=0)>0.01
     fprintf('densplot: Ignoring %.1f%% of points that have y <= 0\n',mean(y<=0)*100);
   end
-  sel=y>0;
-  x=x(sel);
-  y=y(sel);
+  sel=sel & y>0;
 end
+
+x=x(sel);
+y=y(sel);
+
 if nargin < 4 || length(range)==0
   xs=sort(x);
   ys=sort(y);
@@ -136,12 +140,10 @@ colorbar
 colormap('jet');
 cmap=get(gcf,'Colormap');
 cmapsize=max(round(maxcnt),100);
-if size(cmap,1)~=cmapsize
   %  fprintf('Resetting color map to contain %d entries instead of %d\n', cmapsize,size(cmap,1));
   cmap=jet(cmapsize);
   cmap(1,:)=0;  % Make 0 counts black
   set(gcf,'Colormap',cmap);
-end
 
 
 
