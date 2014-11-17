@@ -18,7 +18,7 @@ classdef Logicle  < handle
   methods
     function obj=Logicle(r,M,T)
       if r>0
-        fprintf('Logicle: assuming scaling value of %f is actually -%f\n', r, r);
+        %        fprintf('Logicle: assuming scaling value of %f is actually -%f\n', r, r);
         r=-r;
       end
       obj.r=r;
@@ -40,7 +40,7 @@ classdef Logicle  < handle
         obj.p=obj.findp(Wdesired);
         obj.W=2*obj.p*log10(obj.p)/(obj.p+1);
       end
-      fprintf('r=%.0f, T=%.0f, M=%f, W=%f, p=%f\n', r, obj.T, obj.M, obj.W, obj.p);
+      %      fprintf('r=%.0f, T=%.0f, M=%f, W=%f, p=%f\n', r, obj.T, obj.M, obj.W, obj.p);
       obj.x=0:.005:obj.M;
       obj.y=unmap(obj,obj.x);
     end
