@@ -1,6 +1,6 @@
 % Foldbar - barchar of fold changes
 function foldbar(labels,minus,plus,varargin)
-defaults=struct('ciminus',[],'ciplus',[],'control',[]);
+defaults=struct('ciminus',[],'ciplus',[],'control',[],'minfoldchange',2.4);
 args=processargs(defaults,varargin);
 if ~isempty(args.control)
   minus=minus/args.control;
@@ -56,7 +56,7 @@ for i=1:length(minus)
   p1=pos2normalized([i+mpos*1.5,plus(i)]);
   p2=pos2normalized([i+mpos*1.5,minus(i)]);
   fold=plus(i)/minus(i);
-  if fold >=2.4
+  if fold >=args.minfoldchange
     annotation('doublearrow',[p1(1),p2(1)],[min(p1(2),p2(2))+.01,max(p1(2),p2(2))-.01],'LineWidth',2);
   end
   annotation('textbox',[p1(1)-twidth/2,max(p1(2),p2(2))+.01,twidth,theight],'String',sprintf('%.1f',plus(i)/minus(i)),'HorizontalAlignment','center','VerticalAlignment','bottom','FitBoxToText','on','LineStyle','none');
