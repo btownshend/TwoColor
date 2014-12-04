@@ -140,10 +140,11 @@ colorbar
 colormap('jet');
 cmap=get(gcf,'Colormap');
 cmapsize=max(round(maxcnt),100);
-  %  fprintf('Resetting color map to contain %d entries instead of %d\n', cmapsize,size(cmap,1));
-  cmap=jet(cmapsize);
-  cmap(1,:)=0;  % Make 0 counts black
-  set(gcf,'Colormap',cmap);
+
+%  fprintf('Resetting color map to contain %d entries instead of %d\n', cmapsize,size(cmap,1));
+cmap=jet(cmapsize);
+cmap(1,:)=1;  % Make 0 counts white
+set(gcf,'Colormap',cmap);
 
 
 
