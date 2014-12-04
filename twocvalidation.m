@@ -126,5 +126,7 @@ function result=twocvalidation(varargin)
 
   % Make a validation plot
   
-  twocvalidationplot(summary);
+  if args.doplot
+    twocvalidationplot(summary);
+  end
 end
