@@ -56,7 +56,7 @@ for c=2:length(allconds)
     legend off
     title(allconds{c});
     ps=get(gca,'Position');
-    width=length(s)*0.4/ps(3);
+    width=length(s)*0.3/ps(3);
     pubfigure(sprintf('fig_fold%s',allconds{c}),gcf,width,3.5);
   end
 end
