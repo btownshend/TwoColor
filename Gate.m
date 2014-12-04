@@ -104,7 +104,9 @@ classdef Gate < handle;
             v(:,i)=obj.polygon(:,i);
           end
         end
-        plot(v([1:end,1],1),v([1:end,1],2),popts);
+        vlist=v([1:end,1],:);
+        vlist=vlist(isfinite(vlist(:,1)),:);
+        plot(vlist(:,1),vlist(:,2),popts);
       elseif obj.gatetype==3
         c=axis;
         hold on;
