@@ -44,7 +44,7 @@ for c=2:length(allconds)
     end
   end
 
-  setfig(['twocvalidation-',allconds{c}]);clf;
+  setfig([args.figname,'-',allconds{c}]);clf;
   
   % Only plot samples that are not single-target for a different target
   sel=(isfinite(mean(:,1)) & sum(isfinite(mean),2)==1)|isfinite(mean(:,c));
@@ -54,11 +54,25 @@ for c=2:length(allconds)
   
   % execute the figure drawing twice so that the figure will get resized by pubfigure before the final annotations are added
   for k=1:2
-    legend off
-    title(allconds{c});
-    ps=get(gca,'Position');
-    width=length(s)*0.3/ps(3);
-    pubfigure(sprintf('fig_fold%s',allconds{c}),gcf,width,3.5);
     foldbar({s(sel).basename},mean(sel,1),mean(sel,c)-nonspecific,'ciminus',reshape(ci(sel,1,:),sum(sel),[])-nonspecific,'ciplus',reshape(ci(sel,c,:),sum(sel),[])-nonspecific,'yrange',args.yrange);
+    if isfield(s,'section')
+      % Draw section dividers
+      hold on;
+      sections=[s(sel).section];
+      cax=axis;
+      for i=2:length(sections)
+        if sections(i)~=sections(i-1)
+          plot((i-0.5)*[1,1],cax(3:4),':k');
+        end
+      end
+    end
+    %    legend off
+    if args.publish
+      ps=get(gca,'Position');
+      width=length(s)*0.2/ps(3);
+      pubfigure(sprintf('fig_fold%s',allconds{c}),gcf,width,3.5);
+    else
+      title([args.figname,'-',allconds{c}]);
+    end
   end
 end
