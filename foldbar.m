@@ -66,10 +66,11 @@ for i=1:length(minus)
 end
 colormap([0.8 0 0; 0 0.5 0]);
 if ~isempty(args.control)
-  ylabel('Normalized \mu (GFP/mCherry)');
+  ylabel('Normalized \mu');
 else
-  ylabel('\mu (GFP/mCherry)');
+  ylabel('\mu');
 end
+legend('-target','+target','Location','Best');
 
 function c=pos2normalized(p)
 gcapos=get(gca,'Position');
