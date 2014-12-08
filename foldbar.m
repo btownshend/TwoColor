@@ -1,6 +1,6 @@
 % Foldbar - barchar of fold changes
 function foldbar(labels,minus,plus,varargin)
-defaults=struct('ciminus',[],'ciplus',[],'control',[],'minfoldchange',2.4);
+defaults=struct('ciminus',[],'ciplus',[],'control',[],'minfoldchange',2.4,'yrange',[]);
 args=processargs(defaults,varargin);
 if ~isempty(args.control)
   minus=minus/args.control;
@@ -46,6 +46,9 @@ if ~isempty(args.ciplus)
 end
 ax=axis;
 ax(1)=0.5; ax(2)=length(minus)+0.5;
+if ~isempty(args.yrange)
+  ax(3:4)=[min(ax(3),args.yrange(1)),max(ax(4),args.yrange(2))];
+end
 axis(ax);
 
 twidth=0.05; theight=0.05;

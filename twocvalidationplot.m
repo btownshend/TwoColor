@@ -5,7 +5,9 @@
 %  ci(c,n,2) - confidence intervals
 %  conds{c} - conditions ('' is -target)
 %  samples{n} - sample names
-function twocvalidationplot(s)
+function twocvalidationplot(s,varargin)
+defaults=struct('publish',false,'figname','twocvalidation','yrange',[]);
+args=processargs(defaults,varargin);
 allconds={''};
 for i=1:length(s)
   allconds=union(allconds,s(i).conds);
@@ -52,11 +54,11 @@ for c=2:length(allconds)
   
   % execute the figure drawing twice so that the figure will get resized by pubfigure before the final annotations are added
   for k=1:2
-    foldbar({s(sel).basename},mean(sel,1),mean(sel,c)-nonspecific,'ciminus',squeeze(ci(sel,1,:))-nonspecific,'ciplus',squeeze(ci(sel,c,:))-nonspecific);
     legend off
     title(allconds{c});
     ps=get(gca,'Position');
     width=length(s)*0.3/ps(3);
     pubfigure(sprintf('fig_fold%s',allconds{c}),gcf,width,3.5);
+    foldbar({s(sel).basename},mean(sel,1),mean(sel,c)-nonspecific,'ciminus',reshape(ci(sel,1,:),sum(sel),[])-nonspecific,'ciplus',reshape(ci(sel,c,:),sum(sel),[])-nonspecific,'yrange',args.yrange);
   end
 end
