@@ -1,6 +1,6 @@
 % Foldbar - barchar of fold changes
 function foldbar(labels,minus,plus,varargin)
-defaults=struct('ciminus',[],'ciplus',[],'control',[],'minfoldchange',2.4,'yrange',[]);
+defaults=struct('ciminus',[],'ciplus',[],'control',[],'minfoldchange',2.4,'yrange',[],'legendloc','Best','legend',{{'-target','+target'}});
 args=processargs(defaults,varargin);
 if ~isempty(args.control)
   minus=minus/args.control;
@@ -29,7 +29,7 @@ set(gca,'XTick',1:length(minus));
 set(gca,'XTickLabel',labels);
 set(gca,'XTickLabelRotation',45);
 set(gca,'box','off');
-legend('-target','+target','Location','Best');
+legend(args.legend,'Location',args.legendloc);
 hold on;
 mpos=-.15; ppos=.15;
 if ~isempty(args.ciminus)
@@ -70,7 +70,7 @@ if ~isempty(args.control)
 else
   ylabel('\mu');
 end
-legend('-target','+target','Location','Best');
+legend(args.legend,'Location',args.legendloc);
 
 function c=pos2normalized(p)
 gcapos=get(gca,'Position');
