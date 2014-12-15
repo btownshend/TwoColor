@@ -36,13 +36,15 @@ if ~isempty(args.ciminus)
   if size(args.ciminus,1)~=length(minus) || size(args.ciminus,2)~=2
     error('ciminus must be %d x 2', length(minus));
   end
-  errorbar((1:length(minus))+mpos,minus,minus(:)-args.ciminus(:,1),args.ciminus(:,2)-minus(:),'.k');
+  h=errorbar((1:length(minus))+mpos,minus,minus(:)-args.ciminus(:,1),args.ciminus(:,2)-minus(:),'.k');
+  set(h,'Marker','none');
 end
 if ~isempty(args.ciplus)
   if size(args.ciplus,1)~=length(plus) || size(args.ciplus,2)~=2
     error('ciplus must be %d x 2', length(plus));
   end
-  errorbar((1:length(plus))+ppos,plus,plus(:)-args.ciplus(:,1),args.ciplus(:,2)-plus(:),'.k');
+  h=errorbar((1:length(plus))+ppos,plus,plus(:)-args.ciplus(:,1),args.ciplus(:,2)-plus(:),'.k');
+  set(h,'Marker','none');
 end
 ax=axis;
 ax(1)=0.5; ax(2)=length(minus)+0.5;
