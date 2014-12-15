@@ -49,7 +49,7 @@ elseif args.sortbins>0 && sum(f(1).P(f(1).usegatenum,:))>100
 end
 
 
-setfig([f(1).fname,' Bin edges']);clf;
+setfig([f(1).fname,' twocratioplot']);clf;
 legh=[];
 legv={};
 ti='';
@@ -104,4 +104,4 @@ if ~isempty(args.title)
   ti=args.title;
 end
 title(ti,'Interpreter','none');
-legend(legh,legv,'Interpreter','none','Location','NorthWest');
+legend(legh,legv,'Interpreter','none','Location','EastOutside');
