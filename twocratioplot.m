@@ -53,7 +53,8 @@ setfig([f(1).fname,' Bin edges']);clf;
 legh=[];
 legv={};
 ti='';
-cols='bcmyrg';
+pluscolors=winter(length(f));
+minuscolors=spring(length(f));
 for i=1:length(f)
   x=f(i).data;
   hdr=f(i).hdr;
@@ -64,18 +65,17 @@ for i=1:length(f)
     continue;
   end
   second=0;
-  if ~isempty([strfind(hdr.cells,'+theo'),strfind(hdr.cells,'+ theo'),strfind(f(i).fname,'+theo')])
-    col='g';
-  elseif ~isempty([strfind(hdr.cells,'-theo'),strfind(hdr.cells,'- theo'),strfind(f(i).fname,'-theo')])
-    col='r';
+  if ~isempty(strfind(hdr.cells,'+'))
+    col=pluscolors(i,:);
   else
-    col=cols(mod(i-1,length(cols))+1);
+    col=minuscolors(i,:);
   end
   if args.normalizeratios
-    legh(end+1)=pdfplot(ratio/median(ratio),col,1,max(10,round(length(ratio)/200)));
+    legh(end+1)=pdfplot(ratio/median(ratio),'-',1,max(10,round(length(ratio)/200)));
   else
-    legh(end+1)=pdfplot(ratio,col,1,max(10,round(length(ratio)/200)));
+    legh(end+1)=pdfplot(ratio,'-',1,max(10,round(length(ratio)/200)));
   end
+  set(legh(end),'Color',col);
   hold on;
   legv{end+1}=sprintf('%s (mu=%.3f,sigma=%.2f,N=%d)',hdr.cells,f(i).mu,f(i).sigma,f(i).N);
   ti=[ti,', ',hdr.cells];
