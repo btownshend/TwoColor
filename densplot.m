@@ -5,6 +5,8 @@
 %  bins: [bx,by] number of bins in each direction
 %  range: [minx, maxx, miny, maxy]  for plotting
 %  dolog: true to use log data, if it is a 2-element vector, control log setting for x,y independently
+%  dologicle: true to use logicle data, if it is a 2-element vector, control logicle setting for x,y independently
+%  scaling: scaling factor if using logicle
 function [z,rng]=densplot(x,y,bins,range,dolog,dologicle,scaling)
 if nargin<5 || isempty(dolog)
   dolog=[0,0];
