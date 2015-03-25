@@ -213,6 +213,10 @@ classdef Gates < handle
       else
         psel=true(size(x.gfp,1),1);
       end
+      if sum(psel)<10
+        fprintf('Gates.plot: only %d points; not plotting\n',sum(psel));
+        return;
+      end
       sel=obj.apply(x,gnum);
       if ~isempty(figname)
         setfig(figname);
