@@ -4,7 +4,7 @@
 % 
 % Any entries with ignore non-empty will not be used in summary data
 function result=twocvalidation(varargin)
-  defaults=struct('filename','layout.csv','doplot',true);
+  defaults=struct('filename','layout.csv','doplot',true,'cherryrange',[2000,250000],'gfprange',[100,250000]);
   args=processargs(defaults,varargin);
   fd=fopen(args.filename,'r');
   l=textscan(fd,'%d %s %s %s %s %s %s %s','Delimiter',',','ReturnOnError',true,'HeaderLines',1);
@@ -23,8 +23,8 @@ function result=twocvalidation(varargin)
   % Setup gates>
   g=Gates;
   g.add('All Events','x.fsca>0');
-  g.addrange('mCherry','cherry',1,log10([2000,250000]),'All Events');
-  g.addrange('gfp','gfp',1,log10([100,250000]),'mCherry');
+  g.addrange('mCherry','cherry',1,log10(args.cherryrange),'All Events');
+  g.addrange('gfp','gfp',1,log10(args.gfprange),'mCherry');
   g.addrange('oneplasmid','pratio',0,[0.2,0.4],'gfp');
   g.addrange('multiplasmid','pratio',0,[0.4,2.0],'gfp');
 
