@@ -78,9 +78,11 @@ classdef Gate < handle;
     end
     
 
-    function drawgate(obj,popts) 
+    function drawgate(obj,popts,varargin) 
     % Draw gate onto current plot
     % TODO: this needs work:  currently "dumb" about whether axes are the same as the gate parameters and what the plotting scale is
+      defaults=struct('usey',false)
+      args=processargs(defaults,varargin);
       if nargin<2
         popts='r';
         if obj.gatetype==3
@@ -119,8 +121,8 @@ classdef Gate < handle;
         elseif obj.islog
           r=10.^r;
         end
-        % UGLY hack, assume y-axis if gate is on gfp
-        if strcmp(obj.vars{1},'gfp')
+        % Check which axis to use
+        if args.usey
           plot(c(1:2),[r(1),r(1)],popts);
           plot(c(1:1),[r(2),r(2)],popts);
         else
