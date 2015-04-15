@@ -81,7 +81,7 @@ classdef Gate < handle;
     function drawgate(obj,popts,varargin) 
     % Draw gate onto current plot
     % TODO: this needs work:  currently "dumb" about whether axes are the same as the gate parameters and what the plotting scale is
-      defaults=struct('usey',false)
+      defaults=struct('usey',false);
       args=processargs(defaults,varargin);
       if nargin<2
         popts='r';
