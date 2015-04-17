@@ -7,7 +7,7 @@ function result=twocvalidation(varargin)
   defaults=struct('filename','layout.csv','doplot',true,'cherryrange',[2000,250000],'gfprange',[100,250000]);
   args=processargs(defaults,varargin);
   fd=fopen(args.filename,'r');
-  l=textscan(fd,'%d %s %s %s %s %s %s %s','Delimiter',',','ReturnOnError',true,'HeaderLines',1);
+  l=textscan(fd,'%d %s %s %s %s %f %s %s','Delimiter',',','ReturnOnError',true,'HeaderLines',1);
   fclose(fd);
   if length(l{8})==length(l{7})-1
     % Lose last field if missing final newline
@@ -17,7 +17,6 @@ function result=twocvalidation(varargin)
   for i=1:length(layout)
     layout(i).fname=['data/',layout(i).fname];
   end
-
   %layout=layout(1:14);   % For testing
 
   % Setup gates>
@@ -34,6 +33,12 @@ function result=twocvalidation(varargin)
   % Process all FCS files
   fprintf('Loading %d files\n', length(layout));
   f=twocolor({layout.fname},g,'usegate','mCherry','desc',{layout.desc},'basename',{layout.basename});
+  fn=fieldnames(layout);
+  for i=1:length(f)
+    for ifn=1:length(fn)
+      f(i).(fn{ifn})=layout(i).(fn{ifn});
+    end
+  end
   twocdump(f,'results.csv');
 
   basenames=unique({layout.basename});
