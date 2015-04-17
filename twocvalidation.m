@@ -1,8 +1,8 @@
 % Analyze FCS files for a two-color validation experiment
 % filename is a CSV file (with first line header) containing the following columns:
-% index, basename, desc, fname, ligand, ligand conc, ignore, comment
+% index, basename, desc, fname, ligand, ligand conc, flag, comment
 % 
-% Any entries with ignore non-empty will not be used in summary data
+% Any entries with flag non-empty will not be used in summary data
 function result=twocvalidation(varargin)
   defaults=struct('filename','layout.csv','doplot',true,'cherryrange',[2000,250000],'gfprange',[100,250000]);
   args=processargs(defaults,varargin);
@@ -13,7 +13,7 @@ function result=twocvalidation(varargin)
     % Lose last field if missing final newline
     l{8}{end+1}='';
   end
-  layout=struct('basename',l{2},'desc',l{3},'cond',l{5},'fname',l{4},'note',l{8},'ignore',l{7});
+  layout=struct('basename',l{2},'desc',l{3},'cond',l{5},'fname',l{4},'note',l{8},'flag',l{7},'conc',num2cell(l{6}));
   for i=1:length(layout)
     layout(i).fname=['data/',layout(i).fname];
   end
@@ -87,7 +87,7 @@ function result=twocvalidation(varargin)
     s=struct('basename',basenames{i},'ratio',[],'ci',[],'indices',[],'conds',{{''}},'sample',{{}});
     fsel=find(strcmp({layout.basename},basenames{i}));
     for j=1:length(fsel)
-      if ~isempty(layout(fsel(j)).ignore)
+      if ~isempty(layout(fsel(j)).flag)
         fprintf('Skipping %s since it is marked as bad (note: %s)\n', layout(fsel(j)).desc, layout(fsel(j)).note);
         continue;
       end
