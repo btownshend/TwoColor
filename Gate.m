@@ -129,7 +129,7 @@ classdef Gate < handle;
           plot([r(1),r(1)],c(3:4),popts);
           plot([r(2),r(2)],c(3:4),popts);
         end
-      elseif obj.gattetype==4
+      elseif obj.gatetype==4
         fprintf('Ignoring draw of NOT gate\n');
       else
         error('Bad gatetype: %d\n', obj.gatetype);
