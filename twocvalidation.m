@@ -4,7 +4,7 @@
 % 
 % Any entries with flag non-empty will not be used in summary data
 function result=twocvalidation(varargin)
-  defaults=struct('filename','layout.csv','doplot',true,'cherryrange',[2000,250000],'gfprange',[100,250000]);
+  defaults=struct('filename','layout.csv','doplot',true,'cherryrange',[2000,250000],'gfprange',[100,250000],'subdir','data');
   args=processargs(defaults,varargin);
   fd=fopen(args.filename,'r');
   l=textscan(fd,'%d %s %s %s %s %f %s %s','Delimiter',',','ReturnOnError',true,'HeaderLines',1);
@@ -15,7 +15,7 @@ function result=twocvalidation(varargin)
   end
   layout=struct('basename',l{2},'desc',l{3},'cond',l{5},'fname',l{4},'note',l{8},'flag',l{7},'conc',num2cell(l{6}));
   for i=1:length(layout)
-    layout(i).fname=['data/',layout(i).fname];
+    layout(i).fname=[args.subdir,'/',layout(i).fname];
   end
   %layout=layout(1:14);   % For testing
 
