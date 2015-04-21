@@ -41,7 +41,7 @@ function result=twocvalidation(varargin)
   end
   twocdump(f,'results.csv');
 
-  basenames=unique({layout.basename});
+  basenames=unique({layout.basename},'stable');
   if args.doplot
     for i=1:length(basenames)
       fprintf('Plotting %s...',basenames{i});
