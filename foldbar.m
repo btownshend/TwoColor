@@ -55,7 +55,7 @@ axis(ax);
 
 twidth=0.05; theight=0.05;
 for i=1:length(minus)
-  if isnan(plus(i)) || isnan(minus(i))
+  if ~isfinite(plus(i)) || ~isfinite(minus(i))
     continue;
   end
   p1=pos2normalized([i+mpos*1.5,plus(i)]);
