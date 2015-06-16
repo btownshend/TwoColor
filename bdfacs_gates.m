@@ -16,6 +16,14 @@ if ~isfield(x,'bdfacs')
   error('This does not seem to be a BDFACS file -- outer element, "bdfacs", missing\n');
 end
 
+if isfield(x.bdfacs,'worksheet_template')
+  fprintf('Template file\n');
+  wt=x.bdfacs.worksheet_template;
+  fprintf('  Worksheet Template: %s\n', wt.Attributes.name);
+  results.template=makegates(wt.gates);
+  return
+end
+
 e=x.bdfacs.experiment;
 fprintf('Experiment: %s (%s)\n', e.Attributes.name, e.date.Text);
 aw=e.acquisition_worksheets;
