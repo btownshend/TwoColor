@@ -25,7 +25,7 @@ if args.doplot
   hold on;
 end
 stretch=10.^-(diff(log10(ratios(1:2)))*args.gapfrac/2);
-fprintf('Scaling bin edges in by %fx\n', stretch);
+fprintf('Scaling bin edges in by %fx (gap is %.2f%%)\n', stretch, args.gapfrac*100);
 for i=1:nbins
   if i==1
     r=ratios(1)*stretch;
