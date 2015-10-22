@@ -109,6 +109,12 @@ classdef Gate < handle;
         vlist=v([1:end,1],:);
         vlist=vlist(isfinite(vlist(:,1)),:);
         plot(vlist(:,1),vlist(:,2),popts);
+        if obj.islog(1)
+          set(gca,'XScale','log');
+        end
+        if obj.islog(2)
+          set(gca,'YScale','log');
+        end
       elseif obj.gatetype==3
         c=axis;
         hold on;
