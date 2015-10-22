@@ -3,7 +3,7 @@
 %  triangular regions enclosing everything below or above the given ratio bounds
 % The remaining pins are strips (actually 4-side polygons) that are equally space% in terms of log(ratio)
 function ratios=bdfacs_setpolys(nbins,ratiolow,ratiohigh,outfile,varargin)
-defaults=struct('minx',30,'miny',30,'maxx',262144,'maxy',262144,'doplot',true,'gapfrac',.001);
+defaults=struct('minx',30,'miny',30,'maxx',262143,'maxy',262143,'doplot',true,'gapfrac',.001);
 args=processargs(defaults,varargin);
 
 macrofilename=sprintf('bd-%.0fpolys.xml',nbins);
