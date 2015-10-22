@@ -107,7 +107,7 @@ while true
   for i=1:nbins
     line=strrep(line,sprintf('##Bin%.0f##',i),polys{i});
   end
-  fprintf(out,'%s\n',line);
+  fprintf(out,'%s',line);   % Remove newlines from output
 end
 
 fclose(in);
