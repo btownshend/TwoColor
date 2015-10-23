@@ -90,7 +90,7 @@ for i=1:nbins
   end
   str='';
   for j=1:1:size(p,1)
-    str=[str,sprintf('<point x="%f" y="%f" />',log10(p(j,:)))];
+    str=[str,sprintf('<point x="%.6f" y="%.6f" />',log10(p(j,:)))];
   end
   polys{i}=str;
   if args.doplot
