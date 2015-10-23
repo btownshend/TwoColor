@@ -95,7 +95,7 @@ for i=1:nbins
   polys{i}=str;
   if args.doplot
     loglog(p([1:end,1],1),p([1:end,1],2));
-    pause(1);
+    pause(0.1);
   end
   fprintf('Bin%d: %s\n', i, polys{i});
 end
