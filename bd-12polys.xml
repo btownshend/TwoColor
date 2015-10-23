@@ -3866,8 +3866,44 @@
 <parameters xParam="mCherry-A" xParamFL="mCherry" yParam="FITC-A" yParamFL="FITC" />
 <tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
 <tracker type="POLYGON_TRACKER" />
-<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin12" regionType="POLYGON_REGION">
-<label name="bin12" xOffset="0" yOffset="0" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin1" regionType="POLYGON_REGION">
+<label name="bin1" xOffset="-6" yOffset="6" />
+</gate>
+</tool>
+<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
+<tracker type="POLYGON_TRACKER" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin2" regionType="POLYGON_REGION">
+<label name="bin2" xOffset="-6" yOffset="6" />
+</gate>
+</tool>
+<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
+<tracker type="POLYGON_TRACKER" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin3" regionType="POLYGON_REGION">
+<label name="bin3" xOffset="-6" yOffset="6" />
+</gate>
+</tool>
+<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
+<tracker type="POLYGON_TRACKER" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin4" regionType="POLYGON_REGION">
+<label name="bin4" xOffset="-6" yOffset="6" />
+</gate>
+</tool>
+<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
+<tracker type="POLYGON_TRACKER" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin5" regionType="POLYGON_REGION">
+<label name="bin5" xOffset="-6" yOffset="6" />
+</gate>
+</tool>
+<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
+<tracker type="POLYGON_TRACKER" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin6" regionType="POLYGON_REGION">
+<label name="bin6" xOffset="-6" yOffset="6" />
+</gate>
+</tool>
+<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
+<tracker type="POLYGON_TRACKER" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin7" regionType="POLYGON_REGION">
+<label name="bin7" xOffset="-6" yOffset="6" />
 </gate>
 </tool>
 <tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
@@ -3884,32 +3920,20 @@
 </tool>
 <tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
 <tracker type="POLYGON_TRACKER" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin10" regionType="POLYGON_REGION">
+<label name="bin10" xOffset="-6" yOffset="6" />
+</gate>
+</tool>
+<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
+<tracker type="POLYGON_TRACKER" />
 <gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin11" regionType="POLYGON_REGION">
 <label name="bin11" xOffset="0" yOffset="0" />
 </gate>
 </tool>
 <tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
 <tracker type="POLYGON_TRACKER" />
-<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin1" regionType="POLYGON_REGION">
-<label name="bin1" xOffset="-6" yOffset="6" />
-</gate>
-</tool>
-<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
-<tracker type="POLYGON_TRACKER" />
-<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin2" regionType="POLYGON_REGION">
-<label name="bin2" xOffset="-6" yOffset="6" />
-</gate>
-</tool>
-<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
-<tracker type="POLYGON_TRACKER" />
-<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin4" regionType="POLYGON_REGION">
-<label name="bin4" xOffset="-6" yOffset="6" />
-</gate>
-</tool>
-<tool type="GATETOOL_2D" class="com.bd.applications.heatwave.gate.GateTool2D" layer="Region Layer">
-<tracker type="POLYGON_TRACKER" />
-<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin5" regionType="POLYGON_REGION">
-<label name="bin5" xOffset="-6" yOffset="6" />
+<gate name="All Events\scatter\singlet\dapi\cherry\GFP\bin12" regionType="POLYGON_REGION">
+<label name="bin12" xOffset="0" yOffset="0" />
 </gate>
 </tool>
 <layer name="grid_layer" />
