@@ -91,7 +91,7 @@ bx=floor(x*bins(1));
 by=floor(y*bins(2));
 bx=max(0,min(bins(1)+1,bx))+1;
 by=max(0,min(bins(2)+1,by))+1;
-z=zeros(bins+3);
+z=zeros(bins(2)+3,bins(1)+3);
 for i=1:length(bx)
   z(by(i),bx(i))=z(by(i),bx(i))+1;
 end
