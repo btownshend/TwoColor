@@ -2,14 +2,14 @@ function [fcsdat, fcshdr, fcsdatscaled, fcsdatcomp] = fca_readfcs(filename)
 % [fcsdat, fcshdr, fcsdatscaled, fcsdat_comp] = fca_readfcs(filename);
 %
 %
-% Read FCS 2.0, 3.0 and 3.1 type flow cytometry data file and put the list mode  
+% Read FCS 2.0 and FCS 3.0 type flow cytometry data file and put the list mode  
 % parameters to the fcsdat array with the size of [NumOfPar TotalEvents]. 
 % Some important header data are stored in the fcshdr structure:
 % TotalEvents, NumOfPar, starttime, stoptime and specific info for parameters
 % as name, range, bitdepth, logscale(yes-no) and number of decades.
 %
 % [fcsdat, fcshdr] = fca_readfcs;
-% Without filename input the user can select the desired file(s)
+% Without filename input the user can select the desired file
 % using the standard open file dialog box.
 %
 % [fcsdat, fcshdr, fcsdatscaled] = fca_readfcs(filename);
@@ -20,14 +20,15 @@ function [fcsdat, fcshdr, fcsdatscaled, fcsdatcomp] = fca_readfcs(filename)
 % fcsdatscaled(:,i) = ...
 %   10.^(fcsdat(:,i)/fcshdr.par(i).range*fcshdr.par(i).decade;);
 %
+% 
 %[fcsdat, fcshdr, fcsdatscaled, fcsdat_comp] = fca_readfcs(filename);
-% In that case the script calculates the compensated fluorescence 
-% intensities (fcsdat_comp) as well, if spillover data exist in the header 
+% In that case the script will calculate the compensated fluorescence 
+% intensities (fcsdat_comp) if spillover data exist in the header 
 %
-% Version: 15/Nov/2017
-% University of Debrecen, Institute of Medical Imaging
+% Ver May/24/2014
+% 2006-2014 / University of Debrecen, Institute of Nuclear Medicine
 % Laszlo Balkay 
-% balkay.laszlo@med.unideb.hu
+% balkay@pet.dote.hu
 
 %
 % History
@@ -65,17 +66,6 @@ function [fcsdat, fcshdr, fcsdatscaled, fcsdatcomp] = fca_readfcs(filename)
 % upgrade modified the code according to. The linefeed (ASCII code 10) as 
 % the mnemonic separator was also added. 
 % Thanks for William Peria /Fred Hutchinson Cancer Research Center
-%
-% 15/04/2017
-% First try for the FCS 3.1 standard. The files were supported by 
-% Matteo Ferla, Department of Biochemistry, University of Oxford.
-%
-% 1/11/2017
-% Minor update to allow FCS3.1 data from Attune NxT to be imported
-% Not sure if it is fully FCS3.1 compliant, 
-% Thanks for Robin Cleveland, Biomedical Engineering, Oxford
-
-
 
 % if noarg was supplied
 if nargin == 0
@@ -86,15 +76,10 @@ if nargin == 0
           return;
      end
 else
-    % Remove the NULL ascii character if exiseted. This makes strange
-    % things!
-    filename_asciicode = int16(filename);
-    filename(find(filename_asciicode==0)) = [];
-    % check the if file exist
     filecheck = dir(filename);
-    if size(filecheck,1) == 0 || size(filecheck,1) >1
-        hm = msgbox([filename,': The FCS file or the source directory does not exist!'], ...
-            'FCS reading info','warn');
+    if size(filecheck,1) == 0
+        hm = msgbox([filename,': The file does not exist!'], ...
+            'FcAnalysis info','warn');
         fcsdat = []; fcshdr = []; fcsdatscaled= []; fcsdat_comp= [];
         return;
     end
@@ -122,21 +107,20 @@ end
 fid = fopen(filename,'r','b');
 fcsheader_1stline   = fread(fid,64,'char');
 fcsheader_type = char(fcsheader_1stline(1:6)');
-
-%% reading the header
+%
+%reading the header
+%
 if strcmp(fcsheader_type,'FCS1.0')
-    hm = msgbox('FCS 1.0 file type is not supported!','FCS reading info','warn');
+    hm = msgbox('FCS 1.0 file type is not supported!','FcAnalysis info','warn');
     fcsdat = []; fcshdr = []; fcsdatscaled= []; fcsdat_comp= [];
     fclose(fid);
     return;
-elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0')  || strcmp(fcsheader_type,'FCS3.1') % FCS2.0 or FCS3.0 or FCS3.1 types
+elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0') || strcmp(fcsheader_type,'FCS3.1') % FCS2.0 or FCS3.0 types
     fcshdr.fcstype = fcsheader_type;
     FcsHeaderStartPos   = str2num(char(fcsheader_1stline(11:18)'));
     FcsHeaderStopPos    = str2num(char(fcsheader_1stline(19:26)'));
     FcsDataStartPos     = str2num(char(fcsheader_1stline(27:34)'));
 
-    status = fseek(fid,0,'bof');
-    fcsheader_total = fread(fid,FcsHeaderStopPos+1,'char');%read the total header
     status = fseek(fid,FcsHeaderStartPos,'bof');
     fcsheader_main = fread(fid,FcsHeaderStopPos-FcsHeaderStartPos+1,'char');%read the main header
     warning off MATLAB:nonIntegerTruncatedInConversionToChar;
@@ -146,30 +130,24 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0')  || s
     % delimiter" (FCS standard)
     if fcsheader_main(1) == 12
         mnemonic_separator = 'FF';
-    elseif fcsheader_main(1) == 9 
+    elseif fcsheader_main(1) == 9 % added by RLF August 2010
         mnemonic_separator = 'TAB'; 
     elseif fcsheader_main(1) == 10
         mnemonic_separator = 'LF';
-    elseif fcsheader_main(1) == 30
-        % "Record Selector" asci code = 30
-        rs_pos = find(fcsheader_total == 30);
-        fcsheader_total(rs_pos)  =  int8('|');
-        rs_pos = find(fcsheader_main == 30);
-        fcsheader_main(rs_pos)  =  int8('|');
-        mnemonic_separator = '|';
     else
         mnemonic_separator = char(fcsheader_main(1));
     end
     %
     % if the file size larger than ~100Mbyte the previously defined
     % FcsDataStartPos = 0. In that case the $BEGINDATA parameter stores the correct value
+    % This option was suggested by AP and RLF 
     %
     if ~FcsDataStartPos
          FcsDataStartPos = str2num(get_mnemonic_value('$BEGINDATA',fcsheader_main, mnemonic_separator));
     end
     %
     if mnemonic_separator == '@';% WinMDI
-        hm = msgbox([FileName,': The file can not be read (Unsupported FCS type: WinMDI histogram file)'],'FCS reading info','warn');
+        hm = msgbox([FileName,': The file can not be read (Unsupported FCS type: WinMDI histogram file)'],'FcAnalysis info','warn');
         fcsdat = []; fcshdr = [];fcsdatscaled= []; fcsdat_comp= [];
         fclose(fid);
         return;
@@ -186,10 +164,10 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0')  || s
 %     end
 %     
     fcshdr.Creator = get_mnemonic_value('CREATOR',fcsheader_main, mnemonic_separator);
-    
-    % comp matrix reader
+    %%%%%%comp matrix reader added by RLF 12_15_10
     comp = get_mnemonic_value('SPILL',fcsheader_main,mnemonic_separator); 
     if ~isempty(comp)
+        %%%
         compcell=regexp(comp,',','split');
         nc=str2double(compcell{1});        
         fcshdr.CompLabels=compcell(2:nc+1);
@@ -202,13 +180,27 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0')  || s
     if ~isempty(plate)
         fcshdr.plate=plate;
     end
-    
+    %%%%%%%%%%%% RLF
     for i=1:fcshdr.NumOfPar
         fcshdr.par(i).name = get_mnemonic_value(['$P',num2str(i),'N'],fcsheader_main, mnemonic_separator);
         fcshdr.par(i).range = str2num(get_mnemonic_value(['$P',num2str(i),'R'],fcsheader_main, mnemonic_separator));
         fcshdr.par(i).bit = str2num(get_mnemonic_value(['$P',num2str(i),'B'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).D = get_mnemonic_value(['$P',num2str(i),'D'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).E = get_mnemonic_value(['$P',num2str(i),'E'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).F = optstr2num(get_mnemonic_value(['$P',num2str(i),'F'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).G = optstr2num(get_mnemonic_value(['$P',num2str(i),'G'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).L = optstr2num(get_mnemonic_value(['$P',num2str(i),'L'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).O = get_mnemonic_value(['$P',num2str(i),'O'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).P = get_mnemonic_value(['$P',num2str(i),'P'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).S = get_mnemonic_value(['$P',num2str(i),'S'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).T = optstr2num(get_mnemonic_value(['$P',num2str(i),'T'],fcsheader_main, mnemonic_separator));
+        fcshdr.par(i).V = get_mnemonic_value(['$P',num2str(i),'V'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).calibration = get_mnemonic_value(['$P',num2str(i),'CALIBRATION'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).BS = get_mnemonic_value(['P',num2str(i),'BS'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).MS = get_mnemonic_value(['P',num2str(i),'MS'],fcsheader_main, mnemonic_separator);
+        fcshdr.par(i).display = get_mnemonic_value(['P',num2str(i),'DISPLAY'],fcsheader_main, mnemonic_separator);
 
-        %==============   Changed way that amplification type is treated 
+        %==============   Changed way that amplification type is treated ---  ARM  ==================
         par_exponent_str= (get_mnemonic_value(['$P',num2str(i),'E'],fcsheader_main, mnemonic_separator));
         if isempty(par_exponent_str)
             % There is no "$PiE" mnemonic in the Lysys format
@@ -235,14 +227,14 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0')  || s
             end
         end
         gain_str = get_mnemonic_value(['$P',num2str(i),'G'],fcsheader_main, mnemonic_separator); % added by RLF 
-        if ~isempty(gain_str) 
+        if ~isempty(gain_str) % added by RLF 
             fcshdr.par(i).gain=str2double(gain_str);
         else
             fcshdr.par(i).gain=1;
         end
-  
+     
+%============================================================================================
     end
-    
     fcshdr.starttime = get_mnemonic_value('$BTIM',fcsheader_main, mnemonic_separator);
     fcshdr.stoptime = get_mnemonic_value('$ETIM',fcsheader_main, mnemonic_separator);
     fcshdr.cytometry = get_mnemonic_value('$CYT',fcsheader_main, mnemonic_separator);
@@ -257,17 +249,65 @@ elseif  strcmp(fcsheader_type,'FCS2.0') || strcmp(fcsheader_type,'FCS3.0')  || s
     fcshdr.system = get_mnemonic_value('$SYS',fcsheader_main, mnemonic_separator);
     fcshdr.project = get_mnemonic_value('$PROJ',fcsheader_main, mnemonic_separator);
     fcshdr.experiment = get_mnemonic_value('$EXP',fcsheader_main, mnemonic_separator);
-    fcshdr.cells = get_mnemonic_value('$Cells',fcsheader_main, mnemonic_separator);
+
+    fcshdr.abrt = get_mnemonic_value('$ABRT',fcsheader_main, mnemonic_separator);
+    fcshdr.cells = get_mnemonic_value('$CELLS',fcsheader_main, mnemonic_separator);
     fcshdr.creator = get_mnemonic_value('CREATOR',fcsheader_main, mnemonic_separator);
-        
+    fcshdr.comment = get_mnemonic_value('$COM',fcsheader_main, mnemonic_separator);
+    fcshdr.csmode = get_mnemonic_value('$CSMODE',fcsheader_main, mnemonic_separator);
+    fcshdr.csvbits = get_mnemonic_value('$CSVBITS',fcsheader_main, mnemonic_separator);
+    fcshdr.cytsn = get_mnemonic_value('$CYTSN',fcsheader_main, mnemonic_separator);
+    fcshdr.fil = get_mnemonic_value('$FIL',fcsheader_main, mnemonic_separator);
+    fcshdr.gate = get_mnemonic_value('$GATE',fcsheader_main, mnemonic_separator);
+    fcshdr.gating = get_mnemonic_value('$GATING',fcsheader_main, mnemonic_separator);
+    fcshdr.inst = get_mnemonic_value('$INST',fcsheader_main, mnemonic_separator);
+    fcshdr.lastmodified = get_mnemonic_value('$LAST_MODIFIED',fcsheader_main, mnemonic_separator);
+    fcshdr.lastmodifier = get_mnemonic_value('$LAST_MODIFIER',fcsheader_main, mnemonic_separator);
+    fcshdr.lost = get_mnemonic_value('$LOST',fcsheader_main, mnemonic_separator);
+    fcshdr.mode = get_mnemonic_value('$MODE',fcsheader_main, mnemonic_separator);
+    fcshdr.op = get_mnemonic_value('$OP',fcsheader_main, mnemonic_separator);
+    fcshdr.originality = get_mnemonic_value('$ORIGINALITY',fcsheader_main, mnemonic_separator);
+    fcshdr.plateid = get_mnemonic_value('$PLATEID',fcsheader_main, mnemonic_separator);
+    fcshdr.platename = get_mnemonic_value('$PLATENAME',fcsheader_main, mnemonic_separator);
+    fcshdr.smno = get_mnemonic_value('$SMNO',fcsheader_main, mnemonic_separator);
+    fcshdr.spillover = get_mnemonic_value('$SPILLOVER',fcsheader_main, mnemonic_separator);
+    fcshdr.src = get_mnemonic_value('$SRC',fcsheader_main, mnemonic_separator);
+    fcshdr.sys = get_mnemonic_value('$SYS',fcsheader_main, mnemonic_separator);
+    fcshdr.timestep = get_mnemonic_value('$TIMESTEP',fcsheader_main, mnemonic_separator);
+    fcshdr.tot = optstr2num(get_mnemonic_value('$TOT',fcsheader_main, mnemonic_separator));
+    fcshdr.tr = get_mnemonic_value('$TR',fcsheader_main, mnemonic_separator);
+    fcshdr.vol = get_mnemonic_value('$VOL',fcsheader_main, mnemonic_separator);
+    fcshdr.wellid = get_mnemonic_value('$WELLID',fcsheader_main, mnemonic_separator);
+    fcshdr.tube = get_mnemonic_value('TUBE NAME',fcsheader_main, mnemonic_separator);
+    fcshdr.expt = get_mnemonic_value('EXPERIMENT NAME',fcsheader_main, mnemonic_separator);
+    fcshdr.exporttime = get_mnemonic_value('EXPORT TIME',fcsheader_main, mnemonic_separator);
+    fcshdr.exportuser = get_mnemonic_value('EXPORT USER NAME',fcsheader_main, mnemonic_separator);
+    fcshdr.fscasf = get_mnemonic_value('FSC ASF',fcsheader_main, mnemonic_separator);
+    fcshdr.guid = get_mnemonic_value('GUID',fcsheader_main, mnemonic_separator);
+    fcshdr.applycomp = get_mnemonic_value('APPLY COMPENSATION',fcsheader_main, mnemonic_separator);
+    fcshdr.autobs = get_mnemonic_value('AUTO BS',fcsheader_main, mnemonic_separator);
+    fcshdr.specimen = get_mnemonic_value('SPECIMEN NAME',fcsheader_main, mnemonic_separator);
+    fcshdr.threshold = get_mnemonic_value('THRESHOLD',fcsheader_main, mnemonic_separator);
+    for i=1:10
+      nm=get_mnemonic_value(['LASER',num2str(i),'NAME'],fcsheader_main, mnemonic_separator);
+      if isempty(nm)
+        break;
+      end
+      fschdr.laser(i).name=nm;
+      fschdr.laser(i).asf=optstr2num(get_mnemonic_value(['LASER',num2str(i),'ASF'],fcsheader_main, mnemonic_separator));
+      fschdr.laser(i).delay=optstr2num(get_mnemonic_value(['LASER',num2str(i),'DELAY'],fcsheader_main, mnemonic_separator));
+    end
 else
-    hm = msgbox([FileName,': The file can not be read (Unsupported FCS type)'],'FCS reading info','warn');
+    fprintf('Header Type: %s', fcsheader_type);
+    hm = msgbox([FileName,': The file can not be read (Unsupported FCS type)'],'FcAnalysis info','warn');
+    assert(false);
     fcsdat = []; fcshdr = []; fcsdatscaled= []; fcsdat_comp= [];
     fclose(fid);
     return;
 end
-
-%% reading the events
+%
+%reading the events
+%
 status = fseek(fid,FcsDataStartPos,'bof');
 if strcmp(fcsheader_type,'FCS2.0')
     if strcmp(mnemonic_separator,'\') || strcmp(mnemonic_separator,'FF')... %ordinary or FacsDIVA FCS2.0 
@@ -291,7 +331,12 @@ if strcmp(fcsheader_type,'FCS2.0')
                 if fcshdr.datatype ~= 'F'
                     fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'uint32')');
                 else % 'LYSYS' case
+                  if  strcmp(fcshdr.byteorder, '1,2,3,4') 
+                    disp('Big');
+                    fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32',0,'l')');
+                  else
                     fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32')');
+                  end
                 end
         else 
             bittype = ['ubit',num2str(fcshdr.par(1).bit)];
@@ -306,12 +351,11 @@ if strcmp(fcsheader_type,'FCS2.0')
         end
     end
     fclose(fid);
-elseif strcmp(fcsheader_type,'FCS3.0') || strcmp(fcsheader_type,'FCS3.1') 
-    if strcmp(mnemonic_separator,'|') && strcmp(fcshdr.datatype,'I') && (strcmp( fcshdr.cytometry,'CyAn') || strcmp( fcshdr.cytometry,'MoFlo Astrios' ))% CyAn Summit FCS3.0
-        fcsdat_ = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],['uint',num2str(fcshdr.par(1).bit)],machineformat)'; 
-        %fcsdat_ = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'uint16',machineformat)');
+elseif strcmp(fcsheader_type,'FCS3.0') 
+    if strcmp(mnemonic_separator,'|') && strcmp(fcshdr.datatype,'I') % CyAn Summit FCS3.0
+        fcsdat_ = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'uint16',machineformat)');
         fcsdat = zeros(size(fcsdat_));
-        new_xrange = 2^16; 
+        new_xrange = 1024;
         for i=1:fcshdr.NumOfPar
             fcsdat(:,i) = fcsdat_(:,i)*new_xrange/fcshdr.par(i).range;
             fcshdr.par(i).range = new_xrange;
@@ -325,32 +369,31 @@ elseif strcmp(fcsheader_type,'FCS3.0') || strcmp(fcsheader_type,'FCS3.1')
         elseif findstr(lower(fcshdr.cytometry),'lx') % Luminex data
             fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'int32',machineformat)';
             fcsdat = mod(fcsdat,1024);
-        else  %Assume FCS3.1 format that is the same as FCS3.0
-            if strcmp(fcshdr.datatype,'D')
-                fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'double',machineformat)';
-            elseif strcmp(fcshdr.datatype,'F')
-                fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32',machineformat)';
-            elseif strcmp(fcshdr.datatype,'I')
-                fcsdat = fread(fid,[sum([fcshdr.par.bit]/16) fcshdr.TotalEvents],'uint16',machineformat)'; % sum: William Peria, 16/05/2014
-            end
         end
     else % ordinary FCS 3.0
         if strcmp(fcshdr.datatype,'D')
             fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'double',machineformat)';
         elseif strcmp(fcshdr.datatype,'F')
-            fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32',machineformat)';
-        elseif strcmp(fcshdr.datatype,'I')
-            if sum([fcshdr.par.bit])/fcshdr.par(1).bit ~= fcshdr.NumOfPar % if the bitdepth different at different pars
-                fcsdat = fread(fid,[sum([fcshdr.par.bit]/16) fcshdr.TotalEvents],'uint16',machineformat)'; % sum: William Peria, 16/05/2014 
-            else
-                fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],['uint',num2str(fcshdr.par(1).bit)],machineformat)';
-            end
+        if  strcmp(fcshdr.byteorder, '1,2,3,4') 
+          fprintf('About to read data at position %d (start=%d)\n', ftell(fid),FcsDataStartPos);
+          fcsdat = (fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32',0,'l')');
+        else
+          fcsdat = fread(fid,[fcshdr.NumOfPar fcshdr.TotalEvents],'float32')';
         end
+        elseif strcmp(fcshdr.datatype,'I')
+            fcsdat = fread(fid,[sum([fcshdr.par.bit]/16) fcshdr.TotalEvents],'uint16',machineformat)'; % sum: William Peria, 16/05/2014 
+      else
+        error('Unsupport datatype: %s\n',fcshdr.datatype);
+      end
+      if size(fcsdat,1)~=fcshdr.TotalEvents || size(fcsdat,2)~=fcshdr.NumOfPar
+        error('Read incorrect number of entries from file;  expected %dx%d, got %dx%d\n',fcshdr.TotalEvents, fcshdr.NumOfPar,size(fcsdat));
+      end
     end
     fclose(fid);
 end
 
-%% this is converting Partec to FacsDIVA_FCS20 format if save_FacsDIVA_FCS20 = 1;
+%% this is for Ricardo Khouri converting Partec to FacsDIVA_FCS20 format
+%% 28/01/2013
 save_FacsDIVA_FCS20 = 0;
 if strcmp(fcshdr.cytometry ,'partec PAS') && save_FacsDIVA_FCS20    
     fcsheader_main2 = fcsheader_main;
@@ -371,41 +414,8 @@ if strcmp(fcshdr.cytometry ,'partec PAS') && save_FacsDIVA_FCS20
     fclose(fid2);
 end
 
-%% this is for Gy Vamosi converting MoFlo Astrios with changing some hdr parameters if save_MoFlo_Astrios = 1
-save_MoFlo_Astrios = 0;
-if strcmp(fcshdr.cytometry ,'MoFlo Astrios') && save_MoFlo_Astrios    
-    fcsheader_total_char = char(fcsheader_total)';
-    intmax_pos = strfind(fcsheader_total_char,'4294967296');
-    for i=1:length(intmax_pos)
-            fcsheader_total_char(intmax_pos(i):intmax_pos(i)+length('4294967296')-1) = ['65536|    '];
-    end
-%     byteorder_pos = strfind(fcsheader_total_char,'1,2,3,4');
-%     fcsheader_total_char(byteorder_pos:byteorder_pos+length('1,2,3,4')-1) = '4,3,2,1';
-    
-%     datatype_pos = strfind(fcsheader_total_char,'DATATYPE|I');
-%     fcsheader_total_char(datatype_pos:datatype_pos+length('DATATYPE|I')-1) = 'DATATYPE|F';
-    
-%     pexp_pos = strfind(fcsheader_total_char,'0.0,0.0');
-%     for i=1:length(pexp_pos)
-%         fcsheader_total_char(pexp_pos(i):pexp_pos(i)+length('0.0,0.0')-1) = '0,0|$BL';
-%     end
-    
-%     pgain_pos = strfind(fcsheader_total_char,'G|1.0000000000');
-%     for i=1:length(pgain_pos)
-%         fcsheader_total_char(pgain_pos(i):pgain_pos(i)+length('G|1.0000000000')-1) = 'G|1.0|$BLLLLLL';
-%     end
-    
-    fcsheader_total2 = int8(fcsheader_total_char');
-    
-    fid2 = fopen([FilePath, FileNameMain,'_', fext],'w','b');
-    fwrite(fid2,fcsheader_total2,'char');
-    fwrite(fid2,uint32(fcsdat'),'uint32','ieee-le');
-    %fwrite(fid2,fcsdat','float32','ieee-le');
-    fclose(fid2);
-end
-
-%%  calculate the scaled events (for log scales) 
-
+%calculate the scaled events (for log scales) 
+%RLF added gain division
 if nargout>2
     fcsdatscaled = zeros(size(fcsdat));
     for  i = 1 : fcshdr.NumOfPar
@@ -417,15 +427,13 @@ if nargout>2
             
         elseif fcshdr.par(i).log
             fcsdatscaled(:,i) = Xlogvalatzero*10.^(double(fcsdat(:,i))/XChannelMax*Xlogdecade);
-        else
-            fcsdatscaled(:,i)  = fcsdat(:,i);
+        else fcsdatscaled(:,i)  = fcsdat(:,i);
         end
     end
     
 end
 
-%% calculate the compensated events
-if nargout>3 && ~isempty(fcshdr.CompLabels) 
+if nargout>3 && ~isempty(fcshdr.CompLabels) %RLF. applied to fcsdatscaled rather than fcsdat.
     
     compcols=zeros(1,nc);
     colLabels={fcshdr.par.name};
@@ -437,7 +445,7 @@ if nargout>3 && ~isempty(fcshdr.CompLabels)
 else fcsdatcomp=[];
 end
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function mneval = get_mnemonic_value(mnemonic_name,fcsheader,mnemonic_separator)
 
@@ -446,7 +454,8 @@ if strcmp(mnemonic_separator,'\')  || strcmp(mnemonic_separator,'!') ...
         || strcmp(mnemonic_separator, '/') 
     mnemonic_startpos = findstr(char(fcsheader'),[mnemonic_name,mnemonic_separator]);
     if isempty(mnemonic_startpos)
-        mneval = [];
+      %      fprintf('%s not found in FCS header\n', mnemonic_name);
+        mneval = '';
         return;
     end
     mnemonic_length = length(mnemonic_name);
@@ -458,7 +467,8 @@ if strcmp(mnemonic_separator,'\')  || strcmp(mnemonic_separator,'!') ...
 elseif strcmp(mnemonic_separator,'FF')
     mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
     if isempty(mnemonic_startpos)
-        mneval = [];
+      %fprintf('%s not found in FCS header\n', mnemonic_name);
+        mneval = '';
         return;
     end
     mnemonic_length = length(mnemonic_name);
@@ -467,7 +477,7 @@ elseif strcmp(mnemonic_separator,'FF')
     next_formfeed = next_formfeeds(1) + mnemonic_stoppos;
 
     mneval = char(fcsheader(mnemonic_stoppos + 1 : next_formfeed-1)');
-elseif strcmp(mnemonic_separator,'TAB')
+elseif strcmp(mnemonic_separator,'TAB')   %added by RLF August 2010
     mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
     if isempty(mnemonic_startpos)
         mneval = [];
@@ -480,7 +490,7 @@ elseif strcmp(mnemonic_separator,'TAB')
     
     mneval = char(fcsheader(mnemonic_stoppos + 1 : next_formfeed-1)');
     
-elseif strcmp(mnemonic_separator, 'LF')
+elseif strcmp(mnemonic_separator, 'LF') % William Peria, 16/05/2014
     mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
     if isempty(mnemonic_startpos)
         mneval = [];
@@ -492,19 +502,13 @@ elseif strcmp(mnemonic_separator, 'LF')
     next_linefeed = next_linefeeds(1) + mnemonic_stoppos;
     
     mneval = char(fcsheader(mnemonic_stoppos + 1 : next_linefeed-1)');
-    
-elseif strcmp(mnemonic_separator, 'RS')
-    mnemonic_startpos = findstr(char(fcsheader'),mnemonic_name);
-    if isempty(mnemonic_startpos)
-        mneval = [];
-        return;
-    end
-    mnemonic_length = length(mnemonic_name);
-    mnemonic_stoppos = mnemonic_startpos + mnemonic_length ;
-    next_linefeeds = find( fcsheader(mnemonic_stoppos+1:end) == 30);
-    next_linefeed = next_linefeeds(1) + mnemonic_stoppos;
-    
-    mneval = char(fcsheader(mnemonic_stoppos + 1 : next_linefeed-1)');
+else
+  error('Unsupported separator: char(%d)',mnemonic_separator);
+end
 
-  
+function n=optstr2num(s)
+if isempty(s)
+  n=s;
+else
+  n=str2num(s);
 end
