@@ -85,7 +85,7 @@ classdef Gates < handle
       gscale=822;  % Unsure if this s correct -- just a rough estimate (TODO: Check Aria)
       if isempty(name)
         % No gate
-        sel=true(size(x.gfp,1),1);
+        sel=true(size(x.fsca,1),1);
         return;
       elseif isnumeric(name)
         gnum=name;
@@ -100,7 +100,7 @@ classdef Gates < handle
           sel=obj.apply(x,obj.g{gnum}.parent,[],nowarn);
         end
       else
-        sel=true(size(x.gfp,1),1);
+        sel=true(size(x.fsca,1),1);
       end
       if obj.g{gnum}.gatetype==1   % Expr gate
         sel=sel&eval(obj.g{gnum}.expr);
@@ -163,7 +163,7 @@ classdef Gates < handle
     end
 
     function p=applyall(obj,x)
-      p=false(length(obj.g),size(x.gfp,1));
+      p=false(length(obj.g),size(x.fsca,1));
       for i=1:length(obj.g);
         p(i,:)=obj.apply(x,i,p(1:i-1,:));
       end
@@ -211,7 +211,7 @@ classdef Gates < handle
       if isfinite(parent)
         psel=obj.apply(x,parent);
       else
-        psel=true(size(x.gfp,1),1);
+        psel=true(size(x.fsca,1),1);
       end
       if sum(psel)<10
         fprintf('Gates.plot: only %d points; not plotting\n',sum(psel));
